@@ -1,919 +1,730 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* =========================
+   BDCM — CONFIGURATION
+========================= */
 
-<title>BDCM — Assistant IA</title>
-<link rel="icon" type="image/png" href="Style BDCM ia.png">
+const BDCM_CONFIG = {
 
-<style>
-        * {
-            box-sizing: border-box;
-        }
+    // Voix sélectionnée par défaut
+    voiceName: "",
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-        }
+    // Langue de reconnaissance
+    recognitionLanguage: "fr-FR",
 
-        body {
-            overflow: hidden;
-            background: #050505;
-            color: #ffffff;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+    // Vitesse de parole
+    speechRate: 0.95,
 
-        /* =========================
-           BACKGROUND
-        ========================= */
+    // Hauteur de voix
+    speechPitch: 1,
 
-        .background {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
+    // Volume
+    speechVolume: 1,
 
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(245, 217, 40, 0.08) 0%,
-                    rgba(245, 217, 40, 0.025) 25%,
-                    transparent 55%
-                ),
-                #050505;
-        }
+    // Adresse de notre futur backend
+    apiEndpoint: "/api/chat"
 
-        /* =========================
-           AUDIO VISUALIZER
-        ========================= */
+};
 
-        #visualizer {
-            position: fixed;
-            inset: 0;
 
-            width: 100%;
-            height: 100%;
+/* =========================
+   ELEMENTS
+========================= */
 
-            z-index: 1;
+const core =
+    document.getElementById("core");
 
-            opacity: 0.7;
-            pointer-events: none;
-        }
+const coreContainer =
+    document.getElementById("coreContainer");
 
-        /* =========================
-           MAIN INTERFACE
-        ========================= */
+const coreAction =
+    document.getElementById("coreAction");
 
-        .interface {
-            position: relative;
+const userText =
+    document.getElementById("userText");
 
-            width: 100%;
-            height: 100vh;
+const bdcmText =
+    document.getElementById("bdcmText");
 
-            z-index: 2;
+const statusText =
+    document.getElementById("statusText");
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+const statusDot =
+    document.getElementById("statusDot");
 
-        /* =========================
-           LOGO
-        ========================= */
+const canvas =
+    document.getElementById("visualizer");
 
-        .logo {
-            position: absolute;
+const ctx =
+    canvas.getContext("2d");
 
-            top: 34px;
-            left: 50%;
 
-            transform: translateX(-50%);
+/* =========================
+   VARIABLES
+========================= */
 
-            color: #f5d928;
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let audioData = null;
 
-            font-size: 42px;
-            font-weight: 800;
+let recognition = null;
+let isListening = false;
 
-            letter-spacing: 12px;
+let availableVoices = [];
 
-            text-shadow:
-                0 0 10px rgba(245, 217, 40, 0.45),
-                0 0 30px rgba(245, 217, 40, 0.15);
-        }
+let conversationHistory = [];
 
-        /* =========================
-           STATUS
-        ========================= */
 
-        .status {
-            position: absolute;
+/* =========================
+   CANVAS
+========================= */
 
-            top: 94px;
-            left: 50%;
+function resizeCanvas() {
 
-            transform: translateX(-50%);
+    canvas.width =
+        window.innerWidth;
 
-            display: flex;
-            align-items: center;
+    canvas.height =
+        window.innerHeight;
+}
 
-            color: #666;
+resizeCanvas();
 
-            font-size: 10px;
-            letter-spacing: 3px;
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
 
-            white-space: nowrap;
-        }
 
-        .status-dot {
-            width: 6px;
-            height: 6px;
+/* =========================
+   AUDIO VISUALIZER
+========================= */
 
-            margin-right: 8px;
+async function startVisualizer() {
 
-            border-radius: 50%;
+    try {
 
-            background: #555;
+        if (!audioContext) {
 
-            box-shadow: 0 0 5px #555;
+            const stream =
+                await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
 
-            transition: 0.25s ease;
-        }
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
 
-        /* =========================
-           CORE CONTAINER
-        ========================= */
+            analyser =
+                audioContext.createAnalyser();
 
-        .core-container {
-            position: relative;
+            analyser.fftSize = 256;
 
-            width: 320px;
-            height: 320px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* =========================
-           RINGS
-        ========================= */
-
-        .ring {
-            position: absolute;
-
-            border-radius: 50%;
-
-            pointer-events: none;
-
-            transition:
-                transform 0.3s ease,
-                opacity 0.3s ease;
-        }
-
-        .ring-one {
-            width: 225px;
-            height: 225px;
-
-            border: 1px solid rgba(245, 217, 40, 0.35);
-        }
-
-        .ring-two {
-            width: 265px;
-            height: 265px;
-
-            border: 1px solid rgba(245, 217, 40, 0.16);
-        }
-
-        .ring-three {
-            width: 310px;
-            height: 310px;
-
-            border: 1px solid rgba(245, 217, 40, 0.07);
-        }
-
-        /* =========================
-           MAIN CORE
-        ========================= */
-
-        .core {
-            position: relative;
-
-            width: 175px;
-            height: 175px;
-
-            border-radius: 50%;
-
-            border: 2px solid #f5d928;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(245, 217, 40, 0.18),
-                    rgba(8, 8, 8, 0.98) 65%
+            microphone =
+                audioContext.createMediaStreamSource(
+                    stream
                 );
 
-            box-shadow:
-                0 0 20px rgba(245, 217, 40, 0.35),
-                inset 0 0 40px rgba(245, 217, 40, 0.08);
+            microphone.connect(analyser);
 
-            cursor: pointer;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            user-select: none;
-
-            transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease,
-                border-color 0.2s ease;
+            audioData =
+                new Uint8Array(
+                    analyser.frequencyBinCount
+                );
         }
 
-        .core:hover {
-            transform: scale(1.04);
+        if (
+            audioContext.state === "suspended"
+        ) {
 
-            box-shadow:
-                0 0 35px rgba(245, 217, 40, 0.55),
-                inset 0 0 45px rgba(245, 217, 40, 0.12);
+            await audioContext.resume();
         }
 
-        .core:active {
-            transform: scale(0.97);
-        }
+        drawVisualizer();
 
-        /* =========================
-           CORE TEXT
-        ========================= */
+    } catch (error) {
 
-        .core-text {
-            text-align: center;
-            pointer-events: none;
-        }
+        console.log(
+            "Visualiseur audio indisponible.",
+            error
+        );
+    }
+}
 
-        .core-name {
-            color: #f5d928;
 
-            font-size: 27px;
-            font-weight: 700;
+function drawVisualizer() {
 
-            letter-spacing: 5px;
-        }
+    requestAnimationFrame(
+        drawVisualizer
+    );
 
-        .core-action {
-            margin-top: 10px;
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-            color: #777;
+    if (!analyser) {
+        return;
+    }
 
-            font-size: 8px;
-            letter-spacing: 2px;
-        }
+    analyser.getByteFrequencyData(
+        audioData
+    );
 
-        /* =========================
-           LISTENING STATE
-        ========================= */
+    const centerX =
+        canvas.width / 2;
 
-        .listening .core {
-            border-color: #fff06a;
+    const centerY =
+        canvas.height / 2;
 
-            animation: corePulse 1s infinite ease-in-out;
+    const radius = 190;
 
-            box-shadow:
-                0 0 35px rgba(245, 217, 40, 0.7),
-                0 0 90px rgba(245, 217, 40, 0.2),
-                inset 0 0 50px rgba(245, 217, 40, 0.15);
-        }
+    const bars =
+        audioData.length;
 
-        .listening .ring-one {
-            animation: ringPulse 1s infinite ease-in-out;
-        }
+    ctx.save();
 
-        .listening .ring-two {
-            animation: ringPulse 1s infinite ease-in-out 0.15s;
-        }
+    ctx.translate(
+        centerX,
+        centerY
+    );
 
-        .listening .ring-three {
-            animation: ringPulse 1s infinite ease-in-out 0.3s;
-        }
+    for (
+        let i = 0;
+        i < bars;
+        i++
+    ) {
 
-        @keyframes corePulse {
-            0%,
-            100% {
-                transform: scale(1);
-            }
+        const value =
+            audioData[i] / 255;
 
-            50% {
-                transform: scale(1.07);
-            }
-        }
+        const angle =
+            (i / bars) *
+            Math.PI *
+            2;
 
-        @keyframes ringPulse {
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.35;
-            }
+        const innerRadius =
+            radius;
 
-            50% {
-                transform: scale(1.08);
-                opacity: 0.9;
-            }
-        }
+        const outerRadius =
+            radius +
+            value * 120;
 
-        /* =========================
-           MESSAGE
-        ========================= */
+        const x1 =
+            Math.cos(angle) *
+            innerRadius;
 
-        .message {
-            position: absolute;
+        const y1 =
+            Math.sin(angle) *
+            innerRadius;
 
-            bottom: 105px;
+        const x2 =
+            Math.cos(angle) *
+            outerRadius;
 
-            width: min(720px, 85%);
+        const y2 =
+            Math.sin(angle) *
+            outerRadius;
 
-            text-align: center;
+        ctx.beginPath();
 
-            min-height: 65px;
-        }
-
-        .user-text {
-            margin-bottom: 8px;
-
-            color: #666;
-
-            font-size: 13px;
-        }
-
-        .bdcm-text {
-            color: #f5d928;
-
-            font-size: 17px;
-            line-height: 1.5;
-        }
-
-        /* =========================
-           BOTTOM HINT
-        ========================= */
-
-        .hint {
-            position: absolute;
-
-            bottom: 35px;
-
-            color: #3d3d3d;
-
-            font-size: 9px;
-
-            letter-spacing: 3px;
-
-            text-transform: uppercase;
-        }
-
-        /* =========================
-           CORNER INFORMATION
-        ========================= */
-
-        .corner {
-            position: fixed;
-
-            z-index: 3;
-
-            color: #292929;
-
-            font-size: 8px;
-
-            letter-spacing: 2px;
-        }
-
-        .corner-top-left {
-            top: 24px;
-            left: 24px;
-        }
-
-        .corner-top-right {
-            top: 24px;
-            right: 24px;
-        }
-
-        .corner-bottom-left {
-            bottom: 20px;
-            left: 24px;
-        }
-
-        .corner-bottom-right {
-            bottom: 20px;
-            right: 24px;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 600px) {
-
-            .logo {
-                top: 30px;
-
-                font-size: 31px;
-
-                letter-spacing: 8px;
-            }
-
-            .status {
-                top: 82px;
-            }
-
-            .core-container {
-                transform: scale(0.82);
-            }
-
-            .message {
-                bottom: 95px;
-            }
-
-            .corner {
-                display: none;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="background"></div>
-
-    <canvas id="visualizer"></canvas>
-
-    <div class="corner corner-top-left">
-        BDCM // CORE
-    </div>
-
-    <div class="corner corner-top-right">
-        V.01
-    </div>
-
-    <div class="corner corner-bottom-left">
-        VOICE SYSTEM
-    </div>
-
-    <div class="corner corner-bottom-right">
-        ONLINE
-    </div>
-
-
-    <main class="interface">
-
-        <div class="logo">
-            BDCM
-        </div>
-
-
-        <div class="status">
-
-            <span
-                class="status-dot"
-                id="statusDot">
-            </span>
-
-            <span id="statusText">
-                SYSTEM ONLINE
-            </span>
-
-        </div>
-
-
-        <div
-            class="core-container"
-            id="coreContainer"
-        >
-
-            <div class="ring ring-three"></div>
-
-            <div class="ring ring-two"></div>
-
-            <div class="ring ring-one"></div>
-
-
-            <div
-                class="core"
-                id="core"
-                title="Cliquer pour parler"
-            >
-
-                <div class="core-text">
-
-                    <div class="core-name">
-                        BDCM
-                    </div>
-
-                    <div
-                        class="core-action"
-                        id="coreAction"
-                    >
-                        CLIQUER POUR PARLER
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="message">
-
-            <div
-                class="user-text"
-                id="userText"
-            ></div>
-
-            <div
-                class="bdcm-text"
-                id="bdcmText"
-            >
-                Bonjour. Je suis BDCM.
-            </div>
-
-        </div>
-
-
-        <div class="hint">
-            VOIX • INTELLIGENCE • BDCM
-        </div>
-
-    </main>
-
-
-    <script>
-
-        /* =========================
-           ELEMENTS
-        ========================= */
-
-        const core =
-            document.getElementById("core");
-
-        const coreContainer =
-            document.getElementById("coreContainer");
-
-        const coreAction =
-            document.getElementById("coreAction");
-
-        const userText =
-            document.getElementById("userText");
-
-        const bdcmText =
-            document.getElementById("bdcmText");
-
-        const statusText =
-            document.getElementById("statusText");
-
-        const statusDot =
-            document.getElementById("statusDot");
-
-        const canvas =
-            document.getElementById("visualizer");
-
-        const ctx =
-            canvas.getContext("2d");
-
-
-        /* =========================
-           CANVAS
-        ========================= */
-
-        function resizeCanvas() {
-
-            canvas.width =
-                window.innerWidth;
-
-            canvas.height =
-                window.innerHeight;
-        }
-
-        resizeCanvas();
-
-        window.addEventListener(
-            "resize",
-            resizeCanvas
+        ctx.moveTo(
+            x1,
+            y1
         );
 
+        ctx.lineTo(
+            x2,
+            y2
+        );
 
-        /* =========================
-           AUDIO VISUALIZER
-        ========================= */
+        ctx.strokeStyle =
+            `rgba(245, 217, 40, ${0.05 + value * 0.35})`;
 
-        let audioContext = null;
-        let analyser = null;
-        let microphone = null;
-        let audioData = null;
+        ctx.lineWidth = 1;
 
-        async function startVisualizer() {
+        ctx.stroke();
+    }
 
-            try {
-
-                if (!audioContext) {
-
-                    const stream =
-                        await navigator.mediaDevices.getUserMedia({
-                            audio: true
-                        });
-
-                    audioContext =
-                        new (
-                            window.AudioContext ||
-                            window.webkitAudioContext
-                        )();
-
-                    analyser =
-                        audioContext.createAnalyser();
-
-                    analyser.fftSize = 256;
-
-                    microphone =
-                        audioContext.createMediaStreamSource(
-                            stream
-                        );
-
-                    microphone.connect(analyser);
-
-                    audioData =
-                        new Uint8Array(
-                            analyser.frequencyBinCount
-                        );
-                }
-
-                drawVisualizer();
-
-            } catch (error) {
-
-                console.log(
-                    "Visualiseur audio indisponible."
-                );
-            }
-        }
+    ctx.restore();
+}
 
 
-        function drawVisualizer() {
+/* =========================
+   SPEECH RECOGNITION
+========================= */
 
-            requestAnimationFrame(
-                drawVisualizer
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+if (SpeechRecognition) {
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.lang =
+        BDCM_CONFIG.recognitionLanguage;
+
+    recognition.continuous =
+        false;
+
+    recognition.interimResults =
+        false;
+
+
+    recognition.onstart =
+        function () {
+
+            isListening = true;
+
+            coreContainer.classList.add(
+                "listening"
             );
 
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
+            statusText.textContent =
+                "ÉCOUTE ACTIVE";
+
+            statusDot.style.background =
+                "#f5d928";
+
+            statusDot.style.boxShadow =
+                "0 0 12px #f5d928";
+
+            coreAction.textContent =
+                "JE VOUS ÉCOUTE";
+
+            bdcmText.textContent =
+                "Parlez...";
+        };
+
+
+    recognition.onresult =
+        function (event) {
+
+            const text =
+                event.results[0][0]
+                    .transcript
+                    .trim();
+
+            userText.textContent =
+                "Vous : " + text;
+
+            respondToUser(text);
+        };
+
+
+    recognition.onerror =
+        function (event) {
+
+            console.log(
+                "Erreur reconnaissance :",
+                event.error
             );
 
-            if (!analyser) {
-                return;
-            }
+            stopListening();
 
-            analyser.getByteFrequencyData(
-                audioData
-            );
-
-            const centerX =
-                canvas.width / 2;
-
-            const centerY =
-                canvas.height / 2;
-
-            const radius = 190;
-
-            const bars =
-                audioData.length;
-
-            ctx.save();
-
-            ctx.translate(
-                centerX,
-                centerY
-            );
-
-            for (
-                let i = 0;
-                i < bars;
-                i++
+            if (
+                event.error ===
+                "not-allowed"
             ) {
 
-                const value =
-                    audioData[i] / 255;
+                bdcmText.textContent =
+                    "L'accès au microphone est refusé.";
 
-                const angle =
-                    (i / bars) *
-                    Math.PI *
-                    2;
-
-                const innerRadius =
-                    radius;
-
-                const outerRadius =
-                    radius +
-                    value * 120;
-
-                const x1 =
-                    Math.cos(angle) *
-                    innerRadius;
-
-                const y1 =
-                    Math.sin(angle) *
-                    innerRadius;
-
-                const x2 =
-                    Math.cos(angle) *
-                    outerRadius;
-
-                const y2 =
-                    Math.sin(angle) *
-                    outerRadius;
-
-                ctx.beginPath();
-
-                ctx.moveTo(
-                    x1,
-                    y1
-                );
-
-                ctx.lineTo(
-                    x2,
-                    y2
-                );
-
-                ctx.strokeStyle =
-                    `rgba(245, 217, 40, ${0.05 + value * 0.35})`;
-
-                ctx.lineWidth = 1;
-
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-
-
-        /* =========================
-           SPEECH RECOGNITION
-        ========================= */
-
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-
-        let recognition = null;
-
-        let isListening = false;
-
-
-        if (SpeechRecognition) {
-
-            recognition =
-                new SpeechRecognition();
-
-            recognition.lang =
-                "fr-FR";
-
-            recognition.continuous =
-                false;
-
-            recognition.interimResults =
-                false;
-
-
-            recognition.onstart = function () {
-
-                isListening = true;
-
-                coreContainer.classList.add(
-                    "listening"
-                );
-
-                statusText.textContent =
-                    "ÉCOUTE ACTIVE";
-
-                statusDot.style.background =
-                    "#f5d928";
-
-                statusDot.style.boxShadow =
-                    "0 0 12px #f5d928";
-
-                coreAction.textContent =
-                    "JE VOUS ÉCOUTE";
+            } else if (
+                event.error ===
+                "no-speech"
+            ) {
 
                 bdcmText.textContent =
-                    "Parlez...";
-            };
+                    "Je n'ai rien entendu.";
+
+            } else {
+
+                bdcmText.textContent =
+                    "Une erreur est survenue.";
+            }
+        };
 
 
-            recognition.onresult =
-                function (event) {
+    recognition.onend =
+        function () {
 
-                    const text =
-                        event.results[0][0]
-                            .transcript;
+            stopListening();
+        };
 
-                    userText.textContent =
-                        "Vous : " + text;
+} else {
 
-                    respondToUser(text);
-                };
+    statusText.textContent =
+        "VOIX NON DISPONIBLE";
 
-
-            recognition.onerror =
-                function (event) {
-
-                    console.log(
-                        "Erreur reconnaissance :",
-                        event.error
-                    );
-
-                    stopListening();
-
-                    if (
-                        event.error ===
-                        "not-allowed"
-                    ) {
-
-                        bdcmText.textContent =
-                            "L'accès au microphone est refusé.";
-
-                    } else if (
-                        event.error ===
-                        "no-speech"
-                    ) {
-
-                        bdcmText.textContent =
-                            "Je n'ai rien entendu.";
-
-                    } else {
-
-                        bdcmText.textContent =
-                            "Une erreur est survenue.";
-                    }
-                };
+    bdcmText.textContent =
+        "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
+}
 
 
-            recognition.onend =
-                function () {
+/* =========================
+   START LISTENING
+========================= */
 
-                    stopListening();
-                };
+function startListening() {
+
+    if (!recognition) {
+        return;
+    }
+
+    try {
+
+        userText.textContent = "";
+
+        recognition.start();
+
+        startVisualizer();
+
+    } catch (error) {
+
+        console.log(
+            "Impossible de démarrer la reconnaissance.",
+            error
+        );
+    }
+}
+
+
+/* =========================
+   STOP LISTENING
+========================= */
+
+function stopListening() {
+
+    isListening = false;
+
+    coreContainer.classList.remove(
+        "listening"
+    );
+
+    statusText.textContent =
+        "SYSTEM ONLINE";
+
+    statusDot.style.background =
+        "#555";
+
+    statusDot.style.boxShadow =
+        "0 0 5px #555";
+
+    coreAction.textContent =
+        "CLIQUER POUR PARLER";
+}
+
+
+/* =========================
+   CLICK ON CORE
+========================= */
+
+core.addEventListener(
+    "click",
+    function () {
+
+        if (isListening) {
+
+            recognition.stop();
 
         } else {
 
-            statusText.textContent =
-                "VOIX NON DISPONIBLE";
-
-            bdcmText.textContent =
-                "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
+            startListening();
         }
 
-
-        /* =========================
-           START LISTENING
-        ========================= */
-
-        function startListening() {
-
-            if (!recognition) {
-                return;
-            }
-
-            try {
-
-                userText.textContent = "";
-
-                recognition.start();
-
-                startVisualizer();
-
-            } catch (error) {
-
-                console.log(
-                    "Impossible de démarrer la reconnaissance."
-                );
-            }
-        }
+    }
+);
 
 
-        /* =========================
-           STOP LISTENING
-        ========================= */
+/* =========================
+   OPENAI / BACKEND
+========================= */
 
-        function stopListening() {
+async function respondToUser(text) {
 
-            isListening = false;
+    if (!text || !text.trim()) {
+        return;
+    }
 
-            coreContainer.classList.remove(
-                "listening"
+    const cleanText =
+        text.trim();
+
+    bdcmText.textContent =
+        "Réflexion...";
+
+    statusText.textContent =
+        "BDCM RÉFLÉCHIT";
+
+    statusDot.style.background =
+        "#f5d928";
+
+    statusDot.style.boxShadow =
+        "0 0 12px #f5d928";
+
+    coreAction.textContent =
+        "TRAITEMENT";
+
+
+    /*
+       On garde l'historique de conversation.
+    */
+
+    conversationHistory.push({
+        role: "user",
+        content: cleanText
+    });
+
+
+    try {
+
+        const response =
+            await fetch(
+                BDCM_CONFIG.apiEndpoint,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        message:
+                            cleanText,
+
+                        history:
+                            conversationHistory
+
+                    })
+                }
             );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Erreur serveur : " +
+                response.status
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const answer =
+            data.reply ||
+            data.output ||
+            "Je n'ai pas reçu de réponse.";
+
+
+        conversationHistory.push({
+            role: "assistant",
+            content: answer
+        });
+
+
+        bdcmText.textContent =
+            answer;
+
+
+        speak(answer);
+
+
+    } catch (error) {
+
+        console.error(
+            "Erreur BDCM :",
+            error
+        );
+
+        bdcmText.textContent =
+            "Impossible de contacter mon système d'intelligence.";
+
+        statusText.textContent =
+            "ERREUR CONNEXION";
+
+        statusDot.style.background =
+            "#555";
+
+        statusDot.style.boxShadow =
+            "0 0 5px #555";
+
+        coreAction.textContent =
+            "CONNEXION IMPOSSIBLE";
+    }
+}
+
+
+/* =========================
+   VOICES
+========================= */
+
+function loadVoices() {
+
+    availableVoices =
+        speechSynthesis.getVoices();
+
+    console.log(
+        "Voix disponibles :",
+        availableVoices
+    );
+
+}
+
+
+/*
+   Chrome charge parfois les voix
+   quelques instants après le chargement.
+*/
+
+speechSynthesis.onvoiceschanged =
+    loadVoices;
+
+loadVoices();
+
+
+/* =========================
+   CHOOSE VOICE
+========================= */
+
+function setBDCMVoice(voiceName) {
+
+    BDCM_CONFIG.voiceName =
+        voiceName;
+
+}
+
+
+/* =========================
+   GET SELECTED VOICE
+========================= */
+
+function getSelectedVoice() {
+
+    availableVoices =
+        speechSynthesis.getVoices();
+
+    if (
+        !BDCM_CONFIG.voiceName
+    ) {
+
+        /*
+           Si aucune voix n'est définie,
+           on cherche une voix française.
+        */
+
+        return (
+            availableVoices.find(
+                voice =>
+                    voice.lang
+                        .toLowerCase()
+                        .startsWith("fr")
+            ) ||
+
+            availableVoices[0] ||
+
+            null
+        );
+    }
+
+
+    return (
+        availableVoices.find(
+            voice =>
+                voice.name ===
+                BDCM_CONFIG.voiceName
+        ) ||
+
+        availableVoices[0] ||
+
+        null
+    );
+}
+
+
+/* =========================
+   BDCM VOICE
+========================= */
+
+function speak(text) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        return;
+    }
+
+
+    speechSynthesis.cancel();
+
+
+    const voice =
+        getSelectedVoice();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            text
+        );
+
+
+    if (voice) {
+
+        utterance.voice =
+            voice;
+
+        utterance.lang =
+            voice.lang;
+
+    } else {
+
+        utterance.lang =
+            BDCM_CONFIG.recognitionLanguage;
+    }
+
+
+    utterance.rate =
+        BDCM_CONFIG.speechRate;
+
+    utterance.pitch =
+        BDCM_CONFIG.speechPitch;
+
+    utterance.volume =
+        BDCM_CONFIG.speechVolume;
+
+
+    utterance.onstart =
+        function () {
+
+            statusText.textContent =
+                "BDCM PARLE";
+
+            statusDot.style.background =
+                "#f5d928";
+
+            statusDot.style.boxShadow =
+                "0 0 12px #f5d928";
+
+            coreAction.textContent =
+                "TRANSMISSION";
+        };
+
+
+    utterance.onend =
+        function () {
 
             statusText.textContent =
                 "SYSTEM ONLINE";
@@ -926,243 +737,89 @@
 
             coreAction.textContent =
                 "CLIQUER POUR PARLER";
-        }
+        };
 
 
-        /* =========================
-           CLICK ON CORE
-        ========================= */
+    utterance.onerror =
+        function (error) {
 
-        core.addEventListener(
-            "click",
-            function () {
-
-                if (isListening) {
-
-                    recognition.stop();
-
-                } else {
-
-                    startListening();
-                }
-
-            }
-        );
-
-
-        /* =========================
-           BDCM LOCAL RESPONSES
-           TEMPORARY
-        ========================= */
-
-        function respondToUser(text) {
-
-            const message =
-                text
-                    .toLowerCase()
-                    .trim();
-
-
-            let response =
-                "Je vous ai entendu. Mon intelligence complète sera bientôt connectée.";
-
-
-            if (
-                message.includes("bonjour") ||
-                message.includes("salut") ||
-                message.includes("hello")
-            ) {
-
-                response =
-                    "Bonjour. Comment allez-vous ?";
-            }
-
-
-            else if (
-                message.includes("ça va") ||
-                message.includes("ca va")
-            ) {
-
-                response =
-                    "Je fonctionne parfaitement.";
-            }
-
-
-            else if (
-                message.includes("qui es-tu") ||
-                message.includes("qui es tu")
-            ) {
-
-                response =
-                    "Je suis BDCM, votre assistant personnel.";
-            }
-
-
-            else if (
-                message.includes("ton nom")
-            ) {
-
-                response =
-                    "Mon nom est BDCM.";
-            }
-
-
-            else if (
-                message.includes("merci")
-            ) {
-
-                response =
-                    "Avec plaisir.";
-            }
-
-
-            else if (
-                message.includes("au revoir") ||
-                message.includes("à bientôt") ||
-                message.includes("a bientôt")
-            ) {
-
-                response =
-                    "À bientôt.";
-            }
-
-
-            bdcmText.textContent =
-                response;
-
-
-            speak(response);
-        }
-
-
-        /* =========================
-           BDCM VOICE
-        ========================= */
-
-        function speak(text) {
-
-            if (
-                !("speechSynthesis" in window)
-            ) {
-                return;
-            }
-
-            window.speechSynthesis.cancel();
-
-            const utterance =
-                new SpeechSynthesisUtterance(
-                    text
-                );
-
-            utterance.lang =
-                "fr-FR";
-
-            utterance.rate =
-                0.95;
-
-            utterance.pitch =
-                1;
-
-            utterance.volume =
-                1;
-
-
-            utterance.onstart =
-                function () {
-
-                    statusText.textContent =
-                        "BDCM PARLE";
-
-                    statusDot.style.background =
-                        "#f5d928";
-
-                    statusDot.style.boxShadow =
-                        "0 0 12px #f5d928";
-
-                    coreAction.textContent =
-                        "TRANSMISSION";
-                };
-
-
-            utterance.onend =
-                function () {
-
-                    statusText.textContent =
-                        "SYSTEM ONLINE";
-
-                    statusDot.style.background =
-                        "#555";
-
-                    statusDot.style.boxShadow =
-                        "0 0 5px #555";
-
-                    coreAction.textContent =
-                        "CLIQUER POUR PARLER";
-                };
-
-
-            window.speechSynthesis.speak(
-                utterance
+            console.log(
+                "Erreur voix :",
+                error
             );
-        }
+
+            statusText.textContent =
+                "SYSTEM ONLINE";
+
+            coreAction.textContent =
+                "CLIQUER POUR PARLER";
+        };
 
 
-        /* =========================
-           INITIALISATION
-        ========================= */
-
-        statusText.textContent =
-            "SYSTEM ONLINE";
-
-        bdcmText.textContent =
-            "Bonjour. Je suis BDCM.";
-
-    </script>
-<div id="voice-settings">
-    <label for="voice-select">Voix de BDCM :</label>
-    <select id="voice-select">
-        <option value="">Chargement...</option>
-    </select>
-
-    <button onclick="testVoice()">Tester la voix</button>
-</div>
-
-<script>
-const voiceSelect = document.getElementById("voice-select");
-
-function loadVoices() {
-    const voices = speechSynthesis.getVoices();
-
-    voiceSelect.innerHTML = "";
-
-    voices.forEach((voice, index) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = `${voice.name} — ${voice.lang}`;
-        voiceSelect.appendChild(option);
-    });
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-function testVoice() {
-    const voices = speechSynthesis.getVoices();
-    const voice = voices[voiceSelect.value];
-
-    const speech = new SpeechSynthesisUtterance(
-        "Bonjour. Je suis BDCM, ton assistant personnel."
+    speechSynthesis.speak(
+        utterance
     );
-
-    speech.voice = voice;
-    speech.lang = voice.lang;
-
-    speechSynthesis.cancel();
-    speechSynthesis.speak(speech);
 }
-</script>
 
-</body>
-</html>
-</body>
-</html>
+
+/* =========================
+   TEST VOICE
+========================= */
+
+function testBDCMVoice() {
+
+    speak(
+        "Bonjour. Je suis BDCM, votre assistant personnel."
+    );
+}
+
+
+/* =========================
+   CHANGE SPEECH SPEED
+========================= */
+
+function setSpeechRate(rate) {
+
+    BDCM_CONFIG.speechRate =
+        Number(rate);
+}
+
+
+/* =========================
+   CHANGE PITCH
+========================= */
+
+function setSpeechPitch(pitch) {
+
+    BDCM_CONFIG.speechPitch =
+        Number(pitch);
+}
+
+
+/* =========================
+   RESET CONVERSATION
+========================= */
+
+function clearConversation() {
+
+    conversationHistory = [];
+
+    userText.textContent = "";
+
+    bdcmText.textContent =
+        "Mémoire de conversation réinitialisée.";
+
+}
+
+
+/* =========================
+   INITIALISATION
+========================= */
+
+statusText.textContent =
+    "SYSTEM ONLINE";
+
+bdcmText.textContent =
+    "Bonjour. Je suis BDCM.";
+
+</script>
