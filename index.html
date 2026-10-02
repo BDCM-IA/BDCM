@@ -11,104 +11,429 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
+            width: 100%;
+            height: 100%;
             margin: 0;
-            min-height: 100vh;
+        }
+
+        body {
+            overflow: hidden;
             background: #050505;
-            color: white;
-            font-family: Arial, sans-serif;
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* =========================
+           BACKGROUND
+        ========================= */
+
+        .background {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(245, 217, 40, 0.08) 0%,
+                    rgba(245, 217, 40, 0.025) 25%,
+                    transparent 55%
+                ),
+                #050505;
+        }
+
+        /* =========================
+           AUDIO VISUALIZER
+        ========================= */
+
+        #visualizer {
+            position: fixed;
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 1;
+
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* =========================
+           MAIN INTERFACE
+        ========================= */
+
+        .interface {
+            position: relative;
+
+            width: 100%;
+            height: 100vh;
+
+            z-index: 2;
 
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
-        .container {
-            width: 90%;
-            max-width: 900px;
-            text-align: center;
-        }
+        /* =========================
+           LOGO
+        ========================= */
 
-        h1 {
-            font-size: 60px;
+        .logo {
+            position: absolute;
+
+            top: 34px;
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            color: #f5d928;
+
+            font-size: 42px;
+            font-weight: 800;
+
             letter-spacing: 12px;
-            margin-bottom: 10px;
+
+            text-shadow:
+                0 0 10px rgba(245, 217, 40, 0.45),
+                0 0 30px rgba(245, 217, 40, 0.15);
         }
+
+        /* =========================
+           STATUS
+        ========================= */
 
         .status {
-            color: #00ff88;
-            font-size: 14px;
-            letter-spacing: 4px;
-            margin-bottom: 50px;
-        }
+            position: absolute;
 
-        .core {
-            width: 180px;
-            height: 180px;
-            margin: auto;
+            top: 94px;
+            left: 50%;
 
-            border: 2px solid #00ff88;
-            border-radius: 50%;
+            transform: translateX(-50%);
 
             display: flex;
-            justify-content: center;
             align-items: center;
 
-            box-shadow:
-                0 0 20px #00ff88,
-                0 0 60px rgba(0, 255, 136, 0.3);
+            color: #666;
 
-            animation: pulse 2s infinite;
+            font-size: 10px;
+            letter-spacing: 3px;
+
+            white-space: nowrap;
         }
 
-        .core::before {
-            content: "";
-            width: 35px;
-            height: 35px;
+        .status-dot {
+            width: 6px;
+            height: 6px;
 
-            background: #00ff88;
+            margin-right: 8px;
+
             border-radius: 50%;
 
-            box-shadow: 0 0 30px #00ff88;
+            background: #555;
+
+            box-shadow: 0 0 5px #555;
+
+            transition: 0.25s ease;
         }
 
-        .message {
-            margin-top: 50px;
-            font-size: 20px;
-            color: #cccccc;
+        /* =========================
+           CORE CONTAINER
+        ========================= */
+
+        .core-container {
+            position: relative;
+
+            width: 320px;
+            height: 320px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        button {
-            margin-top: 35px;
+        /* =========================
+           RINGS
+        ========================= */
 
-            padding: 15px 30px;
+        .ring {
+            position: absolute;
 
-            background: transparent;
-            color: white;
+            border-radius: 50%;
 
-            border: 1px solid #00ff88;
-            border-radius: 8px;
+            pointer-events: none;
 
-            font-size: 16px;
+            transition:
+                transform 0.3s ease,
+                opacity 0.3s ease;
+        }
+
+        .ring-one {
+            width: 225px;
+            height: 225px;
+
+            border: 1px solid rgba(245, 217, 40, 0.35);
+        }
+
+        .ring-two {
+            width: 265px;
+            height: 265px;
+
+            border: 1px solid rgba(245, 217, 40, 0.16);
+        }
+
+        .ring-three {
+            width: 310px;
+            height: 310px;
+
+            border: 1px solid rgba(245, 217, 40, 0.07);
+        }
+
+        /* =========================
+           MAIN CORE
+        ========================= */
+
+        .core {
+            position: relative;
+
+            width: 175px;
+            height: 175px;
+
+            border-radius: 50%;
+
+            border: 2px solid #f5d928;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(245, 217, 40, 0.18),
+                    rgba(8, 8, 8, 0.98) 65%
+                );
+
+            box-shadow:
+                0 0 20px rgba(245, 217, 40, 0.35),
+                inset 0 0 40px rgba(245, 217, 40, 0.08);
+
             cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            user-select: none;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
         }
 
-        button:hover {
-            background: #00ff88;
-            color: black;
+        .core:hover {
+            transform: scale(1.04);
+
+            box-shadow:
+                0 0 35px rgba(245, 217, 40, 0.55),
+                inset 0 0 45px rgba(245, 217, 40, 0.12);
         }
 
-        @keyframes pulse {
-            0% {
+        .core:active {
+            transform: scale(0.97);
+        }
+
+        /* =========================
+           CORE TEXT
+        ========================= */
+
+        .core-text {
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .core-name {
+            color: #f5d928;
+
+            font-size: 27px;
+            font-weight: 700;
+
+            letter-spacing: 5px;
+        }
+
+        .core-action {
+            margin-top: 10px;
+
+            color: #777;
+
+            font-size: 8px;
+            letter-spacing: 2px;
+        }
+
+        /* =========================
+           LISTENING STATE
+        ========================= */
+
+        .listening .core {
+            border-color: #fff06a;
+
+            animation: corePulse 1s infinite ease-in-out;
+
+            box-shadow:
+                0 0 35px rgba(245, 217, 40, 0.7),
+                0 0 90px rgba(245, 217, 40, 0.2),
+                inset 0 0 50px rgba(245, 217, 40, 0.15);
+        }
+
+        .listening .ring-one {
+            animation: ringPulse 1s infinite ease-in-out;
+        }
+
+        .listening .ring-two {
+            animation: ringPulse 1s infinite ease-in-out 0.15s;
+        }
+
+        .listening .ring-three {
+            animation: ringPulse 1s infinite ease-in-out 0.3s;
+        }
+
+        @keyframes corePulse {
+            0%,
+            100% {
                 transform: scale(1);
             }
 
             50% {
-                transform: scale(1.05);
+                transform: scale(1.07);
             }
+        }
 
+        @keyframes ringPulse {
+            0%,
             100% {
                 transform: scale(1);
+                opacity: 0.35;
+            }
+
+            50% {
+                transform: scale(1.08);
+                opacity: 0.9;
+            }
+        }
+
+        /* =========================
+           MESSAGE
+        ========================= */
+
+        .message {
+            position: absolute;
+
+            bottom: 105px;
+
+            width: min(720px, 85%);
+
+            text-align: center;
+
+            min-height: 65px;
+        }
+
+        .user-text {
+            margin-bottom: 8px;
+
+            color: #666;
+
+            font-size: 13px;
+        }
+
+        .bdcm-text {
+            color: #f5d928;
+
+            font-size: 17px;
+            line-height: 1.5;
+        }
+
+        /* =========================
+           BOTTOM HINT
+        ========================= */
+
+        .hint {
+            position: absolute;
+
+            bottom: 35px;
+
+            color: #3d3d3d;
+
+            font-size: 9px;
+
+            letter-spacing: 3px;
+
+            text-transform: uppercase;
+        }
+
+        /* =========================
+           CORNER INFORMATION
+        ========================= */
+
+        .corner {
+            position: fixed;
+
+            z-index: 3;
+
+            color: #292929;
+
+            font-size: 8px;
+
+            letter-spacing: 2px;
+        }
+
+        .corner-top-left {
+            top: 24px;
+            left: 24px;
+        }
+
+        .corner-top-right {
+            top: 24px;
+            right: 24px;
+        }
+
+        .corner-bottom-left {
+            bottom: 20px;
+            left: 24px;
+        }
+
+        .corner-bottom-right {
+            bottom: 20px;
+            right: 24px;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            .logo {
+                top: 30px;
+
+                font-size: 31px;
+
+                letter-spacing: 8px;
+            }
+
+            .status {
+                top: 82px;
+            }
+
+            .core-container {
+                transform: scale(0.82);
+            }
+
+            .message {
+                bottom: 95px;
+            }
+
+            .corner {
+                display: none;
             }
         }
     </style>
@@ -116,91 +441,680 @@
 
 <body>
 
-    <div class="container">
+    <div class="background"></div>
 
-        <h1>BDCM</h1>
+    <canvas id="visualizer"></canvas>
+
+    <div class="corner corner-top-left">
+        BDCM // CORE
+    </div>
+
+    <div class="corner corner-top-right">
+        V.01
+    </div>
+
+    <div class="corner corner-bottom-left">
+        VOICE SYSTEM
+    </div>
+
+    <div class="corner corner-bottom-right">
+        ONLINE
+    </div>
+
+
+    <main class="interface">
+
+        <div class="logo">
+            BDCM
+        </div>
+
 
         <div class="status">
-            ● SYSTEM ONLINE
+
+            <span
+                class="status-dot"
+                id="statusDot">
+            </span>
+
+            <span id="statusText">
+                SYSTEM ONLINE
+            </span>
+
         </div>
 
-        <div class="core"></div>
+
+        <div
+            class="core-container"
+            id="coreContainer"
+        >
+
+            <div class="ring ring-three"></div>
+
+            <div class="ring ring-two"></div>
+
+            <div class="ring ring-one"></div>
+
+
+            <div
+                class="core"
+                id="core"
+                title="Cliquer pour parler"
+            >
+
+                <div class="core-text">
+
+                    <div class="core-name">
+                        BDCM
+                    </div>
+
+                    <div
+                        class="core-action"
+                        id="coreAction"
+                    >
+                        CLIQUER POUR PARLER
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
 
         <div class="message">
-            Bonjour. Je suis BDCM.
+
+            <div
+                class="user-text"
+                id="userText"
+            ></div>
+
+            <div
+                class="bdcm-text"
+                id="bdcmText"
+            >
+                Bonjour. Je suis BDCM.
+            </div>
+
         </div>
 
-       <button id="micButton">
-     PARLER À BDCM
-</button>
 
-<div id="result"></div>
+        <div class="hint">
+            VOIX • INTELLIGENCE • BDCM
+        </div>
 
-    </div>
-<script>
-    const micButton = document.getElementById("micButton");
-    const result = document.getElementById("result");
+    </main>
 
-    const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-        result.textContent =
-            "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
-        micButton.disabled = true;
-    } else {
+    <script>
 
-        const recognition = new SpeechRecognition();
+        /* =========================
+           ELEMENTS
+        ========================= */
 
-        recognition.lang = "fr-FR";
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        const core =
+            document.getElementById("core");
 
-        micButton.addEventListener("click", () => {
+        const coreContainer =
+            document.getElementById("coreContainer");
 
-            result.textContent = " BDCM écoute...";
+        const coreAction =
+            document.getElementById("coreAction");
 
-            recognition.start();
-        });
+        const userText =
+            document.getElementById("userText");
 
-        recognition.onresult = (event) => {
+        const bdcmText =
+            document.getElementById("bdcmText");
 
-    const text = event.results[0][0].transcript;
+        const statusText =
+            document.getElementById("statusText");
 
-    result.textContent = "Vous : " + text;
+        const statusDot =
+            document.getElementById("statusDot");
 
-    let response = "J'ai bien reçu votre message.";
+        const canvas =
+            document.getElementById("visualizer");
 
-    if (text.toLowerCase().includes("bonjour")) {
-        response = "Bonjour. Je suis BDCM. Comment puis-je vous aider ?";
-    }
+        const ctx =
+            canvas.getContext("2d");
 
-    if (text.toLowerCase().includes("ça va")) {
-        response = "Je fonctionne parfaitement. Merci de demander.";
-    }
 
-    result.textContent += "\nBDCM : " + response;
+        /* =========================
+           CANVAS
+        ========================= */
 
-    const speech = new SpeechSynthesisUtterance(response);
-    speech.lang = "fr-FR";
-    speech.rate = 0.95;
-    speech.pitch = 0.9;
+        function resizeCanvas() {
 
-    window.speechSynthesis.speak(speech);
-};
-        };
+            canvas.width =
+                window.innerWidth;
 
-        recognition.onerror = (event) => {
+            canvas.height =
+                window.innerHeight;
+        }
 
-            result.textContent =
-                " Erreur microphone : " + event.error;
-        };
+        resizeCanvas();
 
-        recognition.onend = () => {
+        window.addEventListener(
+            "resize",
+            resizeCanvas
+        );
 
-            console.log("Microphone arrêté.");
-        };
-    }
-</script>
+
+        /* =========================
+           AUDIO VISUALIZER
+        ========================= */
+
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let audioData = null;
+
+        async function startVisualizer() {
+
+            try {
+
+                if (!audioContext) {
+
+                    const stream =
+                        await navigator.mediaDevices.getUserMedia({
+                            audio: true
+                        });
+
+                    audioContext =
+                        new (
+                            window.AudioContext ||
+                            window.webkitAudioContext
+                        )();
+
+                    analyser =
+                        audioContext.createAnalyser();
+
+                    analyser.fftSize = 256;
+
+                    microphone =
+                        audioContext.createMediaStreamSource(
+                            stream
+                        );
+
+                    microphone.connect(analyser);
+
+                    audioData =
+                        new Uint8Array(
+                            analyser.frequencyBinCount
+                        );
+                }
+
+                drawVisualizer();
+
+            } catch (error) {
+
+                console.log(
+                    "Visualiseur audio indisponible."
+                );
+            }
+        }
+
+
+        function drawVisualizer() {
+
+            requestAnimationFrame(
+                drawVisualizer
+            );
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            if (!analyser) {
+                return;
+            }
+
+            analyser.getByteFrequencyData(
+                audioData
+            );
+
+            const centerX =
+                canvas.width / 2;
+
+            const centerY =
+                canvas.height / 2;
+
+            const radius = 190;
+
+            const bars =
+                audioData.length;
+
+            ctx.save();
+
+            ctx.translate(
+                centerX,
+                centerY
+            );
+
+            for (
+                let i = 0;
+                i < bars;
+                i++
+            ) {
+
+                const value =
+                    audioData[i] / 255;
+
+                const angle =
+                    (i / bars) *
+                    Math.PI *
+                    2;
+
+                const innerRadius =
+                    radius;
+
+                const outerRadius =
+                    radius +
+                    value * 120;
+
+                const x1 =
+                    Math.cos(angle) *
+                    innerRadius;
+
+                const y1 =
+                    Math.sin(angle) *
+                    innerRadius;
+
+                const x2 =
+                    Math.cos(angle) *
+                    outerRadius;
+
+                const y2 =
+                    Math.sin(angle) *
+                    outerRadius;
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    x1,
+                    y1
+                );
+
+                ctx.lineTo(
+                    x2,
+                    y2
+                );
+
+                ctx.strokeStyle =
+                    `rgba(245, 217, 40, ${0.05 + value * 0.35})`;
+
+                ctx.lineWidth = 1;
+
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+
+        /* =========================
+           SPEECH RECOGNITION
+        ========================= */
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        let recognition = null;
+
+        let isListening = false;
+
+
+        if (SpeechRecognition) {
+
+            recognition =
+                new SpeechRecognition();
+
+            recognition.lang =
+                "fr-FR";
+
+            recognition.continuous =
+                false;
+
+            recognition.interimResults =
+                false;
+
+
+            recognition.onstart = function () {
+
+                isListening = true;
+
+                coreContainer.classList.add(
+                    "listening"
+                );
+
+                statusText.textContent =
+                    "ÉCOUTE ACTIVE";
+
+                statusDot.style.background =
+                    "#f5d928";
+
+                statusDot.style.boxShadow =
+                    "0 0 12px #f5d928";
+
+                coreAction.textContent =
+                    "JE VOUS ÉCOUTE";
+
+                bdcmText.textContent =
+                    "Parlez...";
+            };
+
+
+            recognition.onresult =
+                function (event) {
+
+                    const text =
+                        event.results[0][0]
+                            .transcript;
+
+                    userText.textContent =
+                        "Vous : " + text;
+
+                    respondToUser(text);
+                };
+
+
+            recognition.onerror =
+                function (event) {
+
+                    console.log(
+                        "Erreur reconnaissance :",
+                        event.error
+                    );
+
+                    stopListening();
+
+                    if (
+                        event.error ===
+                        "not-allowed"
+                    ) {
+
+                        bdcmText.textContent =
+                            "L'accès au microphone est refusé.";
+
+                    } else if (
+                        event.error ===
+                        "no-speech"
+                    ) {
+
+                        bdcmText.textContent =
+                            "Je n'ai rien entendu.";
+
+                    } else {
+
+                        bdcmText.textContent =
+                            "Une erreur est survenue.";
+                    }
+                };
+
+
+            recognition.onend =
+                function () {
+
+                    stopListening();
+                };
+
+        } else {
+
+            statusText.textContent =
+                "VOIX NON DISPONIBLE";
+
+            bdcmText.textContent =
+                "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
+        }
+
+
+        /* =========================
+           START LISTENING
+        ========================= */
+
+        function startListening() {
+
+            if (!recognition) {
+                return;
+            }
+
+            try {
+
+                userText.textContent = "";
+
+                recognition.start();
+
+                startVisualizer();
+
+            } catch (error) {
+
+                console.log(
+                    "Impossible de démarrer la reconnaissance."
+                );
+            }
+        }
+
+
+        /* =========================
+           STOP LISTENING
+        ========================= */
+
+        function stopListening() {
+
+            isListening = false;
+
+            coreContainer.classList.remove(
+                "listening"
+            );
+
+            statusText.textContent =
+                "SYSTEM ONLINE";
+
+            statusDot.style.background =
+                "#555";
+
+            statusDot.style.boxShadow =
+                "0 0 5px #555";
+
+            coreAction.textContent =
+                "CLIQUER POUR PARLER";
+        }
+
+
+        /* =========================
+           CLICK ON CORE
+        ========================= */
+
+        core.addEventListener(
+            "click",
+            function () {
+
+                if (isListening) {
+
+                    recognition.stop();
+
+                } else {
+
+                    startListening();
+                }
+
+            }
+        );
+
+
+        /* =========================
+           BDCM LOCAL RESPONSES
+           TEMPORARY
+        ========================= */
+
+        function respondToUser(text) {
+
+            const message =
+                text
+                    .toLowerCase()
+                    .trim();
+
+
+            let response =
+                "Je vous ai entendu. Mon intelligence complète sera bientôt connectée.";
+
+
+            if (
+                message.includes("bonjour") ||
+                message.includes("salut") ||
+                message.includes("hello")
+            ) {
+
+                response =
+                    "Bonjour. Comment allez-vous ?";
+            }
+
+
+            else if (
+                message.includes("ça va") ||
+                message.includes("ca va")
+            ) {
+
+                response =
+                    "Je fonctionne parfaitement.";
+            }
+
+
+            else if (
+                message.includes("qui es-tu") ||
+                message.includes("qui es tu")
+            ) {
+
+                response =
+                    "Je suis BDCM, votre assistant personnel.";
+            }
+
+
+            else if (
+                message.includes("ton nom")
+            ) {
+
+                response =
+                    "Mon nom est BDCM.";
+            }
+
+
+            else if (
+                message.includes("merci")
+            ) {
+
+                response =
+                    "Avec plaisir.";
+            }
+
+
+            else if (
+                message.includes("au revoir") ||
+                message.includes("à bientôt") ||
+                message.includes("a bientôt")
+            ) {
+
+                response =
+                    "À bientôt.";
+            }
+
+
+            bdcmText.textContent =
+                response;
+
+
+            speak(response);
+        }
+
+
+        /* =========================
+           BDCM VOICE
+        ========================= */
+
+        function speak(text) {
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            const utterance =
+                new SpeechSynthesisUtterance(
+                    text
+                );
+
+            utterance.lang =
+                "fr-FR";
+
+            utterance.rate =
+                0.95;
+
+            utterance.pitch =
+                1;
+
+            utterance.volume =
+                1;
+
+
+            utterance.onstart =
+                function () {
+
+                    statusText.textContent =
+                        "BDCM PARLE";
+
+                    statusDot.style.background =
+                        "#f5d928";
+
+                    statusDot.style.boxShadow =
+                        "0 0 12px #f5d928";
+
+                    coreAction.textContent =
+                        "TRANSMISSION";
+                };
+
+
+            utterance.onend =
+                function () {
+
+                    statusText.textContent =
+                        "SYSTEM ONLINE";
+
+                    statusDot.style.background =
+                        "#555";
+
+                    statusDot.style.boxShadow =
+                        "0 0 5px #555";
+
+                    coreAction.textContent =
+                        "CLIQUER POUR PARLER";
+                };
+
+
+            window.speechSynthesis.speak(
+                utterance
+            );
+        }
+
+
+        /* =========================
+           INITIALISATION
+        ========================= */
+
+        statusText.textContent =
+            "SYSTEM ONLINE";
+
+        bdcmText.textContent =
+            "Bonjour. Je suis BDCM.";
+
+    </script>
+
 </body>
 </html>
