@@ -130,11 +130,57 @@
             Bonjour. Je suis BDCM.
         </div>
 
-        <button>
-            🎤 PARLER À BDCM
-        </button>
+       <button id="micButton">
+     PARLER À BDCM
+</button>
+
+<div id="result"></div>
 
     </div>
+<script>
+    const micButton = document.getElementById("micButton");
+    const result = document.getElementById("result");
 
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        result.textContent =
+            "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
+        micButton.disabled = true;
+    } else {
+
+        const recognition = new SpeechRecognition();
+
+        recognition.lang = "fr-FR";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        micButton.addEventListener("click", () => {
+
+            result.textContent = "🎤 BDCM écoute...";
+
+            recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+
+            const text = event.results[0][0].transcript;
+
+            result.textContent = "Vous : " + text;
+        };
+
+        recognition.onerror = (event) => {
+
+            result.textContent =
+                "❌ Erreur microphone : " + event.error;
+        };
+
+        recognition.onend = () => {
+
+            console.log("Microphone arrêté.");
+        };
+    }
+</script>
 </body>
 </html>
