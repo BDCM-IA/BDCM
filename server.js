@@ -19,9 +19,10 @@ app.use((req, res, next) => {
     next();
 });
 
-/* Connexion à OpenAI */
+/* Connexion à Groq */
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1"
 });
 
 /* Route BDCM */
@@ -54,8 +55,7 @@ app.post("/api/chat", async (req, res) => {
         ];
 
         const response = await openai.responses.create({
-            model: "gpt-5-mini",
-            input: messages
+model: "llama-3.3-70b-versatile",            input: messages
         });
 
         res.json({
