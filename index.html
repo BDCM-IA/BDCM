@@ -1118,6 +1118,51 @@
             "Bonjour. Je suis BDCM.";
 
     </script>
+<div id="voice-settings">
+    <label for="voice-select">Voix de BDCM :</label>
+    <select id="voice-select">
+        <option value="">Chargement...</option>
+    </select>
 
+    <button onclick="testVoice()">Tester la voix</button>
+</div>
+
+<script>
+const voiceSelect = document.getElementById("voice-select");
+
+function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+
+    voiceSelect.innerHTML = "";
+
+    voices.forEach((voice, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${voice.name} — ${voice.lang}`;
+        voiceSelect.appendChild(option);
+    });
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function testVoice() {
+    const voices = speechSynthesis.getVoices();
+    const voice = voices[voiceSelect.value];
+
+    const speech = new SpeechSynthesisUtterance(
+        "Bonjour. Je suis BDCM, ton assistant personnel."
+    );
+
+    speech.voice = voice;
+    speech.lang = voice.lang;
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
+}
+</script>
+
+</body>
+</html>
 </body>
 </html>
