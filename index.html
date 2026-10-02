@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BDCM</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #050505;
+            color: white;
+            font-family: Arial, sans-serif;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 60px;
+            letter-spacing: 12px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            color: #00ff88;
+            font-size: 14px;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+        }
+
+        .core {
+            width: 180px;
+            height: 180px;
+            margin: auto;
+
+            border: 2px solid #00ff88;
+            border-radius: 50%;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            box-shadow:
+                0 0 20px #00ff88,
+                0 0 60px rgba(0, 255, 136, 0.3);
+
+            animation: pulse 2s infinite;
+        }
+
+        .core::before {
+            content: "";
+            width: 35px;
+            height: 35px;
+
+            background: #00ff88;
+            border-radius: 50%;
+
+            box-shadow: 0 0 30px #00ff88;
+        }
+
+        .message {
+            margin-top: 50px;
+            font-size: 20px;
+            color: #cccccc;
+        }
+
+        button {
+            margin-top: 35px;
+
+            padding: 15px 30px;
+
+            background: transparent;
+            color: white;
+
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00ff88;
+            color: black;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>BDCM</h1>
+
+        <div class="status">
+            ● SYSTEM ONLINE
+        </div>
+
+        <div class="core"></div>
+
+        <div class="message">
+            Bonjour. Je suis BDCM.
+        </div>
+
+        <button>
+            🎤 PARLER À BDCM
+        </button>
+
+    </div>
+
+</body>
+</html>
