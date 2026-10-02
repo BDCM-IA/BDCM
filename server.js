@@ -4,6 +4,7 @@ const OpenAI = require("openai");
 const app = express();
 
 app.use(express.json());
+app.use(express.static("."));
 
 /* Autoriser BDCM depuis GitHub Pages */
 app.use((req, res, next) => {
