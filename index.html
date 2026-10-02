@@ -158,22 +158,42 @@
 
         micButton.addEventListener("click", () => {
 
-            result.textContent = "🎤 BDCM écoute...";
+            result.textContent = " BDCM écoute...";
 
             recognition.start();
         });
 
         recognition.onresult = (event) => {
 
-            const text = event.results[0][0].transcript;
+    const text = event.results[0][0].transcript;
 
-            result.textContent = "Vous : " + text;
+    result.textContent = "Vous : " + text;
+
+    let response = "J'ai bien reçu votre message.";
+
+    if (text.toLowerCase().includes("bonjour")) {
+        response = "Bonjour. Je suis BDCM. Comment puis-je vous aider ?";
+    }
+
+    if (text.toLowerCase().includes("ça va")) {
+        response = "Je fonctionne parfaitement. Merci de demander.";
+    }
+
+    result.textContent += "\nBDCM : " + response;
+
+    const speech = new SpeechSynthesisUtterance(response);
+    speech.lang = "fr-FR";
+    speech.rate = 0.95;
+    speech.pitch = 0.9;
+
+    window.speechSynthesis.speak(speech);
+};
         };
 
         recognition.onerror = (event) => {
 
             result.textContent =
-                "❌ Erreur microphone : " + event.error;
+                " Erreur microphone : " + event.error;
         };
 
         recognition.onend = () => {
