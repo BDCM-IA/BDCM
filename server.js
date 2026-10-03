@@ -1,6 +1,18 @@
 const express = require("express");
 const OpenAI = require("openai");
+const Database = require("better-sqlite3");
 
+const db = new Database("bdcm.db");
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS knowledge (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        source TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`);
 const app = express();
 
 app.use(express.json());
@@ -35,7 +47,18 @@ app.post("/api/chat", async (req, res) => {
                 error: "Message manquant"
             });
         }
+const cached = db.prepare(`
+    SELECT answer
+    FROM knowledge
+    WHERE question = ?
+    LIMIT 1
+`).get(message);
 
+if (cached) {
+    return res.json({
+        reply: cached.answer
+    });
+}
         const messages = [
             {
                 role: "system",
@@ -64,9 +87,16 @@ const response = await openai.responses.create({
     ]
 });
 
-        res.json({
-            reply: response.output_text
-        });
+        const answer = response.output_text;
+
+db.prepare(`
+    INSERT INTO knowledge (question, answer)
+    VALUES (?, ?)
+`).run(message, answer);
+
+res.json({
+    reply: answer
+});
 
     } catch (error) {
         console.error("ERREUR GROQ :", error);
