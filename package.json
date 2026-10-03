@@ -10,5 +10,6 @@
   "express": "^5.1.0",
   "openai": "^6.0.0",
   "better-sqlite3": "^11.10.0"
+  "@huggingface/transformers": "^4.0.1"
 }
 }
