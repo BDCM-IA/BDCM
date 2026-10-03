@@ -711,6 +711,18 @@ voiceGender.addEventListener("change", () => {
 
 function loadVoices() {
     voices = speechSynthesis.getVoices();
+
+    console.log("VOIX DISPONIBLES :");
+
+    voices.forEach((voice, index) => {
+        console.log(
+            index,
+            "|",
+            voice.name,
+            "|",
+            voice.lang
+        );
+    });
 }
 
 speechSynthesis.onvoiceschanged = loadVoices;
