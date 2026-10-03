@@ -721,24 +721,46 @@ function findVoice() {
     const langBase = language.split("-")[0];
 
     const matching = voices.filter(v =>
-        v.lang && v.lang.toLowerCase().startsWith(langBase)
+        v.lang &&
+        v.lang.toLowerCase().startsWith(langBase)
     );
 
-    if (!matching.length) return voices[0] || null;
+    if (!matching.length) {
+        return null;
+    }
 
-    // Les navigateurs ne donnent pas toujours le genre d'une voix.
-    // On utilise donc des indices dans le nom quand ils existent.
-    const femaleWords = ["female", "woman", "femme", "girl", "samantha", "amelie", "audrey", "sophie", "google français"];
-    const maleWords = ["male", "man", "homme", "boy", "thomas", "paul", "daniel", "alex"];
+    // On essaie de distinguer les voix selon leur nom.
+    const femaleWords = [
+        "female", "woman", "femme", "girl",
+        "samantha", "amelie", "audrey", "sophie",
+        "marie", "julie", "google français"
+    ];
 
-    const words = state.gender === "female" ? femaleWords : maleWords;
+    const maleWords = [
+        "male", "man", "homme", "boy",
+        "thomas", "paul", "daniel", "alex",
+        "antoine", "nicolas"
+    ];
 
-    const detected = matching.find(v => {
-        const name = v.name.toLowerCase();
+    const words =
+        state.gender === "female"
+            ? femaleWords
+            : maleWords;
+
+    const detected = matching.find(voice => {
+        const name = voice.name.toLowerCase();
         return words.some(word => name.includes(word));
     });
 
-    return detected || matching[0];
+    // Si une voix correspondant au genre est trouvée,
+    // on l'utilise.
+    if (detected) {
+        return detected;
+    }
+
+    // Sinon, on garde la première voix disponible
+    // de la bonne langue.
+    return matching[0];
 }
 
 function cleanSpeechText(text) {
