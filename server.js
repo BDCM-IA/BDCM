@@ -20,9 +20,7 @@ app.use((req, res, next) => {
 });
 
 /* Connexion à Groq */
-const openai = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1"
+model: "openai/gpt-oss-20b",
 });
 
 /* Route BDCM */
