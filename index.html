@@ -1,1526 +1,1072 @@
-```html
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>BDCM — Assistant IA</title>
-
-    <link rel="icon" type="image/png" href="Style BDCM ia.png">
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-        }
-
-        body {
-            overflow: hidden;
-            background: #050505;
-            color: #ffffff;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        /* =========================
-           BACKGROUND
-        ========================= */
-
-        .background {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(245, 217, 40, 0.08) 0%,
-                    rgba(245, 217, 40, 0.025) 25%,
-                    transparent 55%
-                ),
-                #050505;
-        }
-
-        /* =========================
-           AUDIO VISUALIZER
-        ========================= */
-
-        #visualizer {
-            position: fixed;
-            inset: 0;
-
-            width: 100%;
-            height: 100%;
-
-            z-index: 1;
-
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        /* =========================
-           MAIN INTERFACE
-        ========================= */
-
-        .interface {
-            position: relative;
-
-            width: 100%;
-            height: 100vh;
-
-            z-index: 2;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* =========================
-           LOGO
-        ========================= */
-
-        .logo {
-            position: absolute;
-
-            top: 34px;
-            left: 50%;
-
-            transform: translateX(-50%);
-
-            color: #f5d928;
-
-            font-size: 42px;
-            font-weight: 800;
-
-            letter-spacing: 12px;
-
-            text-shadow:
-                0 0 10px rgba(245, 217, 40, 0.45),
-                0 0 30px rgba(245, 217, 40, 0.15);
-        }
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        .status {
-            position: absolute;
-
-            top: 94px;
-            left: 50%;
-
-            transform: translateX(-50%);
-
-            display: flex;
-            align-items: center;
-
-            color: #666;
-
-            font-size: 10px;
-            letter-spacing: 3px;
-
-            white-space: nowrap;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-
-            margin-right: 8px;
-
-            border-radius: 50%;
-
-            background: #555;
-
-            box-shadow: 0 0 5px #555;
-
-            transition: 0.25s ease;
-        }
-
-        /* =========================
-           CORE CONTAINER
-        ========================= */
-
-        .core-container {
-            position: relative;
-
-            width: 320px;
-            height: 320px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* =========================
-           RINGS
-        ========================= */
-
-        .ring {
-            position: absolute;
-
-            border-radius: 50%;
-
-            pointer-events: none;
-
-            transition:
-                transform 0.3s ease,
-                opacity 0.3s ease;
-        }
-
-        .ring-one {
-            width: 225px;
-            height: 225px;
-
-            border: 1px solid rgba(245, 217, 40, 0.35);
-        }
-
-        .ring-two {
-            width: 265px;
-            height: 265px;
-
-            border: 1px solid rgba(245, 217, 40, 0.16);
-        }
-
-        .ring-three {
-            width: 310px;
-            height: 310px;
-
-            border: 1px solid rgba(245, 217, 40, 0.07);
-        }
-
-        /* =========================
-           MAIN CORE
-        ========================= */
-
-        .core {
-            position: relative;
-
-            width: 175px;
-            height: 175px;
-
-            border-radius: 50%;
-
-            border: 2px solid #f5d928;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(245, 217, 40, 0.18),
-                    rgba(8, 8, 8, 0.98) 65%
-                );
-
-            box-shadow:
-                0 0 20px rgba(245, 217, 40, 0.35),
-                inset 0 0 40px rgba(245, 217, 40, 0.08);
-
-            cursor: pointer;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            user-select: none;
-
-            transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease,
-                border-color 0.2s ease;
-        }
-
-        .core:hover {
-            transform: scale(1.04);
-
-            box-shadow:
-                0 0 35px rgba(245, 217, 40, 0.55),
-                inset 0 0 45px rgba(245, 217, 40, 0.12);
-        }
-
-        .core:active {
-            transform: scale(0.97);
-        }
-
-        /* =========================
-           CORE TEXT
-        ========================= */
-
-        .core-text {
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .core-name {
-            color: #f5d928;
-
-            font-size: 27px;
-            font-weight: 700;
-
-            letter-spacing: 5px;
-        }
-
-        .core-action {
-            margin-top: 10px;
-
-            color: #777;
-
-            font-size: 8px;
-            letter-spacing: 2px;
-        }
-
-        /* =========================
-           LISTENING STATE
-        ========================= */
-
-        .listening .core {
-            border-color: #fff06a;
-
-            animation: corePulse 1s infinite ease-in-out;
-
-            box-shadow:
-                0 0 35px rgba(245, 217, 40, 0.7),
-                0 0 90px rgba(245, 217, 40, 0.2),
-                inset 0 0 50px rgba(245, 217, 40, 0.15);
-        }
-
-        .listening .ring-one {
-            animation: ringPulse 1s infinite ease-in-out;
-        }
-
-        .listening .ring-two {
-            animation: ringPulse 1s infinite ease-in-out 0.15s;
-        }
-
-        .listening .ring-three {
-            animation: ringPulse 1s infinite ease-in-out 0.3s;
-        }
-
-        @keyframes corePulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.07);
-            }
-        }
-
-        @keyframes ringPulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.35;
-            }
-
-            50% {
-                transform: scale(1.08);
-                opacity: 0.9;
-            }
-        }
-
-        /* =========================
-           MESSAGE
-        ========================= */
-
-.message {
-    display: none;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDCM</title>
+
+<style>
+:root {
+    --accent: #f5d928;
+    --bg: #050505;
+    --panel: rgba(10,10,10,.94);
+    --text: #f5f5f5;
+    --muted: #888;
+    --border: rgba(245,217,40,.28);
 }
 
-        .user-text {
-            margin-bottom: 8px;
-
-            color: #666;
-
-            font-size: 13px;
-        }
-
-        .bdcm-text {
-            color: #f5d928;
-
-            font-size: 17px;
-            line-height: 1.5;
-        }
-
-        /* =========================
-           BOTTOM HINT
-        ========================= */
-
-        .hint {
-            position: absolute;
-
-            bottom: 35px;
-
-            color: #3d3d3d;
-
-            font-size: 9px;
-
-            letter-spacing: 3px;
-
-            text-transform: uppercase;
-        }
-
-        /* =========================
-           CORNER INFORMATION
-        ========================= */
-
-        .corner {
-            position: fixed;
-
-            z-index: 3;
-
-            color: #292929;
-
-            font-size: 8px;
-
-            letter-spacing: 2px;
-        }
-
-        .corner-top-left {
-            top: 24px;
-            left: 24px;
-        }
-
-        .corner-top-right {
-            top: 24px;
-            right: 24px;
-        }
-
-        .corner-bottom-left {
-            bottom: 20px;
-            left: 24px;
-        }
-
-        .corner-bottom-right {
-            bottom: 20px;
-            right: 24px;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 600px) {
-
-            .logo {
-                top: 30px;
-
-                font-size: 31px;
-
-                letter-spacing: 8px;
-            }
-
-            .status {
-                top: 82px;
-            }
-
-            .core-container {
-                transform: scale(0.82);
-            }
-
-            .message {
-                bottom: 95px;
-            }
-
-            .corner {
-                display: none;
-            }
-        }
-
-    </style>
-
-</head>
-
-
-<body>
-
-    <div class="background"></div>
-
-    <canvas id="visualizer"></canvas>
-
-
-    <div class="corner corner-top-left">
-        BDCM // CORE
-    </div>
-
-    <div class="corner corner-top-right">
-        V.01
-    </div>
-
-    <div class="corner corner-bottom-left">
-        VOICE SYSTEM
-    </div>
-
-    <div class="corner corner-bottom-right">
-        ONLINE
-    </div>
-
-
-    <main class="interface">
-
-        <div class="logo">
-            BDCM
-        </div>
-
-
-        <div class="status">
-
-            <span
-                class="status-dot"
-                id="statusDot">
-            </span>
-
-            <span id="statusText">
-                SYSTEM ONLINE
-            </span>
-
-        </div>
-
-
-        <div
-            class="core-container"
-            id="coreContainer"
-        >
-
-            <div class="ring ring-three"></div>
-
-            <div class="ring ring-two"></div>
-
-            <div class="ring ring-one"></div>
-
-
-            <div
-                class="core"
-                id="core"
-                title="Cliquer pour parler"
-            >
-
-                <div class="core-text">
-
-                    <div class="core-name">
-                        BDCM
-                    </div>
-
-                    <div
-                        class="core-action"
-                        id="coreAction"
-                    >
-                        CLIQUER POUR PARLER
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="message">
-
-            <div
-                class="user-text"
-                id="userText"
-            ></div>
-
-            <div
-                class="bdcm-text"
-                id="bdcmText"
-            >
-                Bonjour. Je suis BDCM.
-            </div>
-
-        </div>
-
-
-        <div class="hint">
-            VOIX • INTELLIGENCE • BDCM
-        </div>
-
-    </main>
-
-
-    <script>
-
-        /* =========================
-           BDCM CONFIGURATION
-        ========================= */
-
-        const BDCM_CONFIG = {
-
-            /*
-             * Laisser vide pour utiliser
-             * automatiquement une voix française.
-             *
-             * Plus tard on pourra mettre :
-             * voiceName: "Nom exact de la voix"
-             */
-
-            voiceName: "",
-
-            recognitionLanguage: "fr-FR",
-
-speechRate: 1.08,
-speechPitch: 0.92,
-
-speechVolume: 1,
-
-            /*
-             * Notre futur serveur Node.js
-             */
-
-            apiEndpoint: "https://bdcm.onrender.com/api/chat"
-        };
-
-
-        /* =========================
-           ELEMENTS
-        ========================= */
-
-        const core =
-            document.getElementById("core");
-
-        const coreContainer =
-            document.getElementById("coreContainer");
-
-        const coreAction =
-            document.getElementById("coreAction");
-
-        const userText =
-            document.getElementById("userText");
-
-        const bdcmText =
-            document.getElementById("bdcmText");
-
-        const statusText =
-            document.getElementById("statusText");
-
-        const statusDot =
-            document.getElementById("statusDot");
-
-        const canvas =
-            document.getElementById("visualizer");
-
-        const ctx =
-            canvas.getContext("2d");
-
-
-        /* =========================
-           VARIABLES
-        ========================= */
-
-        let audioContext = null;
-
-        let analyser = null;
-
-        let microphone = null;
-
-        let audioData = null;
-
-        let recognition = null;
-
-        let isListening = false;
-
-        let availableVoices = [];
-
-        let conversationHistory = [];
-
-
-        /* =========================
-           CANVAS
-        ========================= */
-
-        function resizeCanvas() {
-
-            canvas.width =
-                window.innerWidth;
-
-            canvas.height =
-                window.innerHeight;
-
-        }
-
-
-        resizeCanvas();
-
-
-        window.addEventListener(
-            "resize",
-            resizeCanvas
-        );
-
-
-        /* =========================
-           AUDIO VISUALIZER
-        ========================= */
-
-        async function startVisualizer() {
-
-            try {
-
-                if (!audioContext) {
-
-                    const stream =
-                        await navigator.mediaDevices.getUserMedia({
-                            audio: true
-                        });
-
-
-                    audioContext =
-                        new (
-                            window.AudioContext ||
-                            window.webkitAudioContext
-                        )();
-
-
-                    analyser =
-                        audioContext.createAnalyser();
-
-
-                    analyser.fftSize = 256;
-
-
-                    microphone =
-                        audioContext.createMediaStreamSource(
-                            stream
-                        );
-
-
-                    microphone.connect(
-                        analyser
-                    );
-
-
-                    audioData =
-                        new Uint8Array(
-                            analyser.frequencyBinCount
-                        );
-
-                }
-
-
-                if (
-                    audioContext.state ===
-                    "suspended"
-                ) {
-
-                    await audioContext.resume();
-
-                }
-
-
-                drawVisualizer();
-
-
-            } catch (error) {
-
-                console.log(
-                    "Visualiseur audio indisponible.",
-                    error
-                );
-
-            }
-
-        }
-
-
-        function drawVisualizer() {
-
-            requestAnimationFrame(
-                drawVisualizer
-            );
-
-
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-
-            if (!analyser) {
-                return;
-            }
-
-
-            analyser.getByteFrequencyData(
-                audioData
-            );
-
-
-            const centerX =
-                canvas.width / 2;
-
-
-            const centerY =
-                canvas.height / 2;
-
-
-            const radius = 190;
-
-
-            const bars =
-                audioData.length;
-
-
-            ctx.save();
-
-
-            ctx.translate(
-                centerX,
-                centerY
-            );
-
-
-            for (
-                let i = 0;
-                i < bars;
-                i++
-            ) {
-
-                const value =
-                    audioData[i] / 255;
-
-
-                const angle =
-                    (i / bars) *
-                    Math.PI *
-                    2;
-
-
-                const innerRadius =
-                    radius;
-
-
-                const outerRadius =
-                    radius +
-                    value * 120;
-
-
-                const x1 =
-                    Math.cos(angle) *
-                    innerRadius;
-
-
-                const y1 =
-                    Math.sin(angle) *
-                    innerRadius;
-
-
-                const x2 =
-                    Math.cos(angle) *
-                    outerRadius;
-
-
-                const y2 =
-                    Math.sin(angle) *
-                    outerRadius;
-
-
-                ctx.beginPath();
-
-
-                ctx.moveTo(
-                    x1,
-                    y1
-                );
-
-
-                ctx.lineTo(
-                    x2,
-                    y2
-                );
-
-
-                ctx.strokeStyle =
-                    `rgba(245, 217, 40, ${0.05 + value * 0.35})`;
-
-
-                ctx.lineWidth = 1;
-
-
-                ctx.stroke();
-
-            }
-
-
-            ctx.restore();
-
-        }
-
-
-        /* =========================
-           SPEECH RECOGNITION
-        ========================= */
-
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-
-        if (SpeechRecognition) {
-
-            recognition =
-                new SpeechRecognition();
-
-
-            recognition.lang =
-                BDCM_CONFIG.recognitionLanguage;
-
-
-            recognition.continuous =
-                false;
-
-
-            recognition.interimResults =
-                false;
-
-
-            recognition.onstart =
-                function () {
-
-                    isListening = true;
-
-
-                    coreContainer.classList.add(
-                        "listening"
-                    );
-
-
-                    statusText.textContent =
-                        "ÉCOUTE ACTIVE";
-
-
-                    statusDot.style.background =
-                        "#f5d928";
-
-
-                    statusDot.style.boxShadow =
-                        "0 0 12px #f5d928";
-
-
-                    coreAction.textContent =
-                        "JE VOUS ÉCOUTE";
-
-
-                    bdcmText.textContent =
-                        "Parlez...";
-
-                };
-
-
-            recognition.onresult =
-                function (event) {
-
-                    const text =
-                        event.results[0][0]
-                            .transcript
-                            .trim();
-
-
-                    userText.textContent =
-                        "Vous : " + text;
-
-
-                    respondToUser(text);
-
-                };
-
-
-            recognition.onerror =
-                function (event) {
-
-                    console.log(
-                        "Erreur reconnaissance :",
-                        event.error
-                    );
-
-
-                    stopListening();
-
-
-                    if (
-                        event.error ===
-                        "not-allowed"
-                    ) {
-
-                        bdcmText.textContent =
-                            "L'accès au microphone est refusé.";
-
-                    }
-
-                    else if (
-                        event.error ===
-                        "no-speech"
-                    ) {
-
-                        bdcmText.textContent =
-                            "Je n'ai rien entendu.";
-
-                    }
-
-                    else {
-
-                        bdcmText.textContent =
-                            "Une erreur est survenue.";
-
-                    }
-
-                };
-
-
-            recognition.onend =
-                function () {
-
-                    stopListening();
-
-                };
-
-        }
-
-        else {
-
-            statusText.textContent =
-                "VOIX NON DISPONIBLE";
-
-
-            bdcmText.textContent =
-                "La reconnaissance vocale n'est pas disponible dans ce navigateur.";
-
-        }
-
-
-        /* =========================
-           START LISTENING
-        ========================= */
-
-        function startListening() {
-
-            if (!recognition) {
-                return;
-            }
-
-
-            try {
-
-                userText.textContent = "";
-
-
-                recognition.start();
-
-
-                startVisualizer();
-
-
-            } catch (error) {
-
-                console.log(
-                    "Impossible de démarrer la reconnaissance.",
-                    error
-                );
-
-            }
-
-        }
-
-
-        /* =========================
-           STOP LISTENING
-        ========================= */
-
-        function stopListening() {
-
-            isListening = false;
-
-
-            coreContainer.classList.remove(
-                "listening"
-            );
-
-
-            statusText.textContent =
-                "SYSTEM ONLINE";
-
-
-            statusDot.style.background =
-                "#555";
-
-
-            statusDot.style.boxShadow =
-                "0 0 5px #555";
-
-
-            coreAction.textContent =
-                "CLIQUER POUR PARLER";
-
-        }
-
-
-        /* =========================
-           CLICK ON CORE
-        ========================= */
-
-        core.addEventListener(
-            "click",
-            function () {
-
-                if (isListening) {
-
-                    recognition.stop();
-
-                }
-
-                else {
-
-                    startListening();
-
-                }
-
-            }
-        );
-
-
-        /* =========================
-           OPENAI / BACKEND
-        ========================= */
-
-        async function respondToUser(text) {
-
-            if (!text || !text.trim()) {
-                return;
-            }
-
-
-            const cleanText =
-                text.trim();
-
-
-            bdcmText.textContent =
-                "Réflexion...";
-
-
-            statusText.textContent =
-                "BDCM RÉFLÉCHIT";
-
-
-            statusDot.style.background =
-                "#f5d928";
-
-
-            statusDot.style.boxShadow =
-                "0 0 12px #f5d928";
-
-
-            coreAction.textContent =
-                "TRAITEMENT";
-
-
-            conversationHistory.push({
-
-                role: "user",
-
-                content: cleanText
-
-            });
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        BDCM_CONFIG.apiEndpoint,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                message:
-                                    cleanText,
-
-                                history:
-                                    conversationHistory
-
-                            })
-
-                        }
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Erreur serveur : " +
-                        response.status
-                    );
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                const answer =
-                    data.reply ||
-                    data.output ||
-                    "Je n'ai pas reçu de réponse.";
-
-
-                conversationHistory.push({
-
-                    role: "assistant",
-
-                    content: answer
-
-                });
-
-
-                bdcmText.textContent =
-                    answer;
-
-
-                speak(answer);
-
-
-            } catch (error) {
-
-                console.error(
-                    "Erreur BDCM :",
-                    error
-                );
-
-
-                bdcmText.textContent =
-                    "Impossible de contacter mon système d'intelligence.";
-
-
-                statusText.textContent =
-                    "ERREUR CONNEXION";
-
-
-                statusDot.style.background =
-                    "#555";
-
-
-                statusDot.style.boxShadow =
-                    "0 0 5px #555";
-
-
-                coreAction.textContent =
-                    "CONNEXION IMPOSSIBLE";
-
-            }
-
-        }
-
-
-        /* =========================
-           VOICES
-        ========================= */
-
-        function loadVoices() {
-
-            availableVoices =
-                speechSynthesis.getVoices();
-
-
-            console.log(
-                "Voix disponibles :",
-                availableVoices
-            );
-
-        }
-
-
-        speechSynthesis.onvoiceschanged =
-            loadVoices;
-
-
-        loadVoices();
-
-
-        /* =========================
-           CHOOSE VOICE
-        ========================= */
-
-        function setBDCMVoice(voiceName) {
-
-            BDCM_CONFIG.voiceName =
-                voiceName;
-
-        }
-
-
-        /* =========================
-           GET VOICE
-        ========================= */
-
-        function getSelectedVoice() {
-
-            availableVoices =
-                speechSynthesis.getVoices();
-
-
-            if (
-                !BDCM_CONFIG.voiceName
-            ) {
-
-                return (
-
-                    availableVoices.find(
-                        voice =>
-                            voice.lang
-                                .toLowerCase()
-                                .startsWith("fr")
-                    )
-
-                    ||
-
-                    availableVoices[0]
-
-                    ||
-
-                    null
-
-                );
-
-            }
-
-
-            return (
-
-                availableVoices.find(
-                    voice =>
-                        voice.name ===
-                        BDCM_CONFIG.voiceName
-                )
-
-                ||
-
-                availableVoices[0]
-
-                ||
-
-                null
-
-            );
-
-        }
-
-
-        /* =========================
-           BDCM SPEAK
-        ========================= */
-
-function speak(text) {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-
-        return;
-
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    transition: background .25s, color .25s;
+}
+
+body.light {
+    --bg: #eeeeee;
+    --panel: rgba(255,255,255,.96);
+    --text: #151515;
+    --muted: #666;
+    --border: rgba(0,0,0,.18);
+}
+
+#visualizer {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: .35;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.topbar {
+    position: fixed;
+    top: 22px;
+    left: 0;
+    width: 100%;
+    padding: 0 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 7px;
+    color: var(--accent);
+    text-shadow: 0 0 16px color-mix(in srgb, var(--accent), transparent 50%);
+}
+
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #555;
+}
+
+.menu-button {
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 25px;
+    line-height: 1;
+    padding: 5px 8px;
+}
+
+.menu-button:hover {
+    color: var(--accent);
+}
+
+.core-area {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.core-wrap {
+    position: relative;
+    width: min(310px, 65vw);
+    height: min(310px, 65vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ring {
+    position: absolute;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    opacity: .45;
+    animation: rotate 12s linear infinite;
+}
+
+.ring.one {
+    width: 100%;
+    height: 100%;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+.ring.two {
+    width: 82%;
+    height: 82%;
+    animation-duration: 8s;
+    animation-direction: reverse;
+    border-top-color: transparent;
+}
+
+.ring.three {
+    width: 64%;
+    height: 64%;
+    animation-duration: 6s;
+    border-bottom-color: transparent;
+}
+
+.core {
+    position: relative;
+    width: 34%;
+    height: 34%;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle, var(--accent) 0%, #2a2600 25%, transparent 68%);
+    box-shadow:
+        0 0 20px var(--accent),
+        0 0 70px color-mix(in srgb, var(--accent), transparent 55%),
+        inset 0 0 25px var(--accent);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .2s;
+}
+
+.core:hover {
+    transform: scale(1.04);
+}
+
+.core.listening {
+    animation: pulse .9s infinite alternate;
+}
+
+.core.speaking {
+    animation: pulse .6s infinite alternate;
+}
+
+.core-action {
+    margin-top: 28px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.bottom-info {
+    position: fixed;
+    bottom: 28px;
+    text-align: center;
+    width: 100%;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+#menu {
+    position: fixed;
+    z-index: 10;
+    top: 62px;
+    right: 24px;
+    width: min(360px, calc(100vw - 32px));
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+    padding: 22px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    backdrop-filter: blur(18px);
+    transform: translateY(-8px) scale(.98);
+    opacity: 0;
+    pointer-events: none;
+    transition: .18s ease;
+}
+
+#menu.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.menu-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+}
+
+.close {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.section {
+    margin-top: 18px;
+}
+
+.section-label {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.option-list {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.option {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    padding: 12px 13px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.option:last-child {
+    border-bottom: 0;
+}
+
+.option:hover,
+.option.selected {
+    background: color-mix(in srgb, var(--accent), transparent 88%);
+}
+
+.option.selected::after {
+    content: "✓";
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    font-size: 13px;
+}
+
+.select option {
+    color: #111;
+    background: #fff;
+}
+
+.colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.color {
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.color.selected {
+    border-color: var(--text);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.account {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.account-button {
+    width: 100%;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.account-button:hover {
+    background: color-mix(in srgb, var(--accent), transparent 88%);
+}
+
+#accountModal {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0,0,0,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: .18s;
+}
+
+#accountModal.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.account-box {
+    width: min(380px, calc(100vw - 32px));
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.account-box h2 {
+    margin-top: 0;
+    letter-spacing: 2px;
+}
+
+.account-box input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    outline: none;
+}
+
+.account-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.account-actions button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.primary {
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #111;
+}
+
+.secondary {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 12px;
+}
+
+@keyframes rotate {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+}
+
+@media (max-width: 600px) {
+    .topbar {
+        padding: 0 16px;
     }
 
+    .status {
+        display: none;
+    }
+}
+</style>
+</head>
 
-            speechSynthesis.cancel();
+<body>
+<canvas id="visualizer"></canvas>
 
+<div class="app">
+    <div class="topbar">
+        <div class="logo">BDCM</div>
 
-            const voice =
-                getSelectedVoice();
+        <div class="top-right">
+            <div class="status">
+                <span id="statusDot" class="status-dot"></span>
+                <span id="statusText">SYSTEM ONLINE</span>
+            </div>
 
+            <button id="menuButton" class="menu-button" aria-label="Réglages">⋯</button>
+        </div>
+    </div>
 
-            const utterance =
-                new SpeechSynthesisUtterance(
-                    text
-                );
+    <main class="core-area">
+        <div class="core-wrap">
+            <div class="ring one"></div>
+            <div class="ring two"></div>
+            <div class="ring three"></div>
+            <div id="core" class="core"></div>
+        </div>
 
+        <div id="coreAction" class="core-action">CLIQUER POUR PARLER</div>
+    </main>
 
-            if (voice) {
+    <div id="bottomInfo" class="bottom-info">MODE CHILL · FRANÇAIS · VOIX FÉMININE</div>
+</div>
 
-                utterance.voice =
-                    voice;
+<!-- MENU -->
+<aside id="menu">
+    <div class="menu-title">
+        <span>RÉGLAGES BDCM</span>
+        <button id="closeMenu" class="close">×</button>
+    </div>
 
+    <div class="section">
+        <div class="section-label">MODE</div>
+        <div class="option-list">
+            <button class="option mode-option selected" data-mode="chill">⚫ Chill</button>
+            <button class="option mode-option" data-mode="agent">🟡 Agent</button>
+            <button class="option mode-option" data-mode="ecoute">🟢 Écoute</button>
+        </div>
+    </div>
 
-                utterance.lang =
-                    voice.lang;
+    <div class="section">
+        <div class="section-label">LANGUE</div>
+        <select id="languageSelect" class="select">
+            <option value="fr-FR">🇫🇷 Français</option>
+            <option value="en-US">🇬🇧 English</option>
+            <option value="es-ES">🇪🇸 Español</option>
+            <option value="de-DE">🇩🇪 Deutsch</option>
+            <option value="it-IT">🇮🇹 Italiano</option>
+        </select>
+    </div>
 
+    <div class="section">
+        <div class="section-label">VOIX</div>
+        <select id="voiceGender" class="select">
+            <option value="female">👩 Féminine</option>
+            <option value="male">👨 Masculine</option>
+        </select>
+    </div>
+
+    <div class="section">
+        <div class="section-label">APPARENCE</div>
+        <div class="option-list">
+            <button class="option theme-option selected" data-theme="dark">☾ Sombre</button>
+            <button class="option theme-option" data-theme="light">☀ Clair</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-label">COULEUR</div>
+        <div id="colors" class="colors">
+            <button class="color selected" data-color="#f5d928" style="background:#f5d928"></button>
+            <button class="color" data-color="#35b7ff" style="background:#35b7ff"></button>
+            <button class="color" data-color="#38e27b" style="background:#38e27b"></button>
+            <button class="color" data-color="#b76cff" style="background:#b76cff"></button>
+            <button class="color" data-color="#ff4d67" style="background:#ff4d67"></button>
+            <button class="color" data-color="#ff8b32" style="background:#ff8b32"></button>
+            <button class="color" data-color="#ffffff" style="background:#ffffff"></button>
+        </div>
+    </div>
+
+    <div class="account">
+        <button id="accountButton" class="account-button">👤 CRÉER UN COMPTE / SE CONNECTER</button>
+        <div class="hint">
+            La partie compte sera reliée au serveur plus tard pour synchroniser les réglages entre appareils.
+        </div>
+    </div>
+</aside>
+
+<!-- COMPTE -->
+<div id="accountModal">
+    <div class="account-box">
+        <h2>COMPTE BDCM</h2>
+        <input id="emailInput" type="email" placeholder="Adresse e-mail">
+        <input id="passwordInput" type="password" placeholder="Mot de passe">
+
+        <div class="account-actions">
+            <button id="loginButton" class="primary">SE CONNECTER</button>
+            <button id="cancelAccount" class="secondary">FERMER</button>
+        </div>
+
+        <div class="hint">
+            L'inscription réelle sera activée lorsque nous ajouterons l'authentification au serveur. Aucun mot de passe n'est envoyé avec cette version.
+        </div>
+    </div>
+</div>
+
+<script>
+const CONFIG = {
+    apiEndpoint: "https://bdcm.onrender.com/api/chat",
+    speechRate: 1.12,
+    speechPitch: 0.94,
+    speechVolume: 1
+};
+
+const state = {
+    mode: localStorage.getItem("bdcm_mode") || "chill",
+    language: localStorage.getItem("bdcm_language") || "fr-FR",
+    gender: localStorage.getItem("bdcm_gender") || "female",
+    theme: localStorage.getItem("bdcm_theme") || "dark",
+    color: localStorage.getItem("bdcm_color") || "#f5d928"
+};
+
+const core = document.getElementById("core");
+const coreAction = document.getElementById("coreAction");
+const statusText = document.getElementById("statusText");
+const statusDot = document.getElementById("statusDot");
+const bottomInfo = document.getElementById("bottomInfo");
+
+const menu = document.getElementById("menu");
+const menuButton = document.getElementById("menuButton");
+const closeMenu = document.getElementById("closeMenu");
+
+const languageSelect = document.getElementById("languageSelect");
+const voiceGender = document.getElementById("voiceGender");
+
+let recognition = null;
+let isListening = false;
+let isSpeaking = false;
+let voices = [];
+let conversationHistory = [];
+
+function saveState() {
+    localStorage.setItem("bdcm_mode", state.mode);
+    localStorage.setItem("bdcm_language", state.language);
+    localStorage.setItem("bdcm_gender", state.gender);
+    localStorage.setItem("bdcm_theme", state.theme);
+    localStorage.setItem("bdcm_color", state.color);
+}
+
+function applyState() {
+    document.documentElement.style.setProperty("--accent", state.color);
+    document.body.classList.toggle("light", state.theme === "light");
+
+    languageSelect.value = state.language;
+    voiceGender.value = state.gender;
+
+    document.querySelectorAll(".mode-option").forEach(button => {
+        button.classList.toggle("selected", button.dataset.mode === state.mode);
+    });
+
+    document.querySelectorAll(".theme-option").forEach(button => {
+        button.classList.toggle("selected", button.dataset.theme === state.theme);
+    });
+
+    document.querySelectorAll(".color").forEach(button => {
+        button.classList.toggle("selected", button.dataset.color === state.color);
+    });
+
+    const modeName = {
+        chill: "CHILL",
+        agent: "AGENT",
+        ecoute: "ÉCOUTE"
+    }[state.mode];
+
+    const languageName = {
+        "fr-FR": "FRANÇAIS",
+        "en-US": "ENGLISH",
+        "es-ES": "ESPAÑOL",
+        "de-DE": "DEUTSCH",
+        "it-IT": "ITALIANO"
+    }[state.language];
+
+    const genderName = state.gender === "female" ? "VOIX FÉMININE" : "VOIX MASCULINE";
+
+    bottomInfo.textContent = `MODE ${modeName} · ${languageName} · ${genderName}`;
+
+    if (recognition) {
+        recognition.lang = state.language;
+    }
+}
+
+function openMenu() {
+    menu.classList.add("open");
+}
+
+function closeSettings() {
+    menu.classList.remove("open");
+}
+
+menuButton.addEventListener("click", () => {
+    if (isSpeaking) stopSpeaking();
+    menu.classList.toggle("open");
+});
+
+closeMenu.addEventListener("click", closeSettings);
+
+document.addEventListener("click", event => {
+    if (
+        menu.classList.contains("open") &&
+        !menu.contains(event.target) &&
+        event.target !== menuButton
+    ) {
+        closeSettings();
+    }
+});
+
+document.querySelectorAll(".mode-option").forEach(button => {
+    button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        saveState();
+        applyState();
+    });
+});
+
+document.querySelectorAll(".theme-option").forEach(button => {
+    button.addEventListener("click", () => {
+        state.theme = button.dataset.theme;
+        saveState();
+        applyState();
+    });
+});
+
+document.querySelectorAll(".color").forEach(button => {
+    button.addEventListener("click", () => {
+        state.color = button.dataset.color;
+        saveState();
+        applyState();
+    });
+});
+
+languageSelect.addEventListener("change", () => {
+    state.language = languageSelect.value;
+    saveState();
+    applyState();
+});
+
+voiceGender.addEventListener("change", () => {
+    state.gender = voiceGender.value;
+    saveState();
+    applyState();
+});
+
+function loadVoices() {
+    voices = speechSynthesis.getVoices();
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function findVoice() {
+    const language = state.language.toLowerCase();
+    const langBase = language.split("-")[0];
+
+    const matching = voices.filter(v =>
+        v.lang && v.lang.toLowerCase().startsWith(langBase)
+    );
+
+    if (!matching.length) return voices[0] || null;
+
+    // Les navigateurs ne donnent pas toujours le genre d'une voix.
+    // On utilise donc des indices dans le nom quand ils existent.
+    const femaleWords = ["female", "woman", "femme", "girl", "samantha", "amelie", "audrey", "sophie", "google français"];
+    const maleWords = ["male", "man", "homme", "boy", "thomas", "paul", "daniel", "alex"];
+
+    const words = state.gender === "female" ? femaleWords : maleWords;
+
+    const detected = matching.find(v => {
+        const name = v.name.toLowerCase();
+        return words.some(word => name.includes(word));
+    });
+
+    return detected || matching[0];
+}
+
+function cleanSpeechText(text) {
+    return text
+        .replace(/```[\s\S]*?```/g, "")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/#{1,6}\s?/g, "")
+        .replace(/`/g, "")
+        .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+        .replace(/【.*?】/g, "")
+        .replace(/^\s*[-•]\s*/gm, "")
+        .replace(/\n+/g, ". ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+
+    const clean = cleanSpeechText(text);
+    if (!clean) return;
+
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    const voice = findVoice();
+
+    if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+    } else {
+        utterance.lang = state.language;
+    }
+
+    utterance.rate = CONFIG.speechRate;
+    utterance.pitch = CONFIG.speechPitch;
+    utterance.volume = CONFIG.speechVolume;
+
+    utterance.onstart = () => {
+        isSpeaking = true;
+        core.classList.add("speaking");
+        statusText.textContent = "BDCM PARLE";
+        statusDot.style.background = state.color;
+        statusDot.style.boxShadow = `0 0 12px ${state.color}`;
+        coreAction.textContent = "CLIQUER POUR COUPER";
+    };
+
+    utterance.onend = () => {
+        isSpeaking = false;
+        core.classList.remove("speaking");
+        statusText.textContent = "SYSTEM ONLINE";
+        statusDot.style.background = "#555";
+        statusDot.style.boxShadow = "0 0 5px #555";
+        coreAction.textContent = "CLIQUER POUR PARLER";
+    };
+
+    utterance.onerror = () => {
+        isSpeaking = false;
+        core.classList.remove("speaking");
+        statusText.textContent = "SYSTEM ONLINE";
+        coreAction.textContent = "CLIQUER POUR PARLER";
+    };
+
+    speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    core.classList.remove("speaking");
+    statusText.textContent = "SYSTEM ONLINE";
+    statusDot.style.background = "#555";
+    statusDot.style.boxShadow = "0 0 5px #555";
+    coreAction.textContent = "CLIQUER POUR PARLER";
+}
+
+function setListeningUI(active) {
+    isListening = active;
+
+    if (active) {
+        core.classList.add("listening");
+        statusText.textContent = "ÉCOUTE ACTIVE";
+        statusDot.style.background = state.color;
+        statusDot.style.boxShadow = `0 0 12px ${state.color}`;
+        coreAction.textContent = "JE VOUS ÉCOUTE";
+    } else {
+        core.classList.remove("listening");
+
+        if (!isSpeaking) {
+            statusText.textContent = "SYSTEM ONLINE";
+            statusDot.style.background = "#555";
+            statusDot.style.boxShadow = "0 0 5px #555";
+            coreAction.textContent = "CLIQUER POUR PARLER";
+        }
+    }
+}
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = state.language;
+
+    recognition.onstart = () => setListeningUI(true);
+
+    recognition.onresult = event => {
+        const text = event.results[0][0].transcript.trim();
+        respondToUser(text);
+    };
+
+    recognition.onerror = event => {
+        console.log("Erreur reconnaissance :", event.error);
+        setListeningUI(false);
+    };
+
+    recognition.onend = () => setListeningUI(false);
+} else {
+    statusText.textContent = "VOIX NON DISPONIBLE";
+    coreAction.textContent = "NAVIGATEUR NON COMPATIBLE";
+}
+
+function startListening() {
+    if (!recognition) return;
+
+    if (isSpeaking) {
+        stopSpeaking();
+        return;
+    }
+
+    try {
+        recognition.lang = state.language;
+        recognition.start();
+    } catch (error) {
+        console.log("Reconnaissance déjà active ou indisponible.", error);
+    }
+}
+
+function getSystemPrompt() {
+    const prompts = {
+        chill: `
+Tu es BDCM en mode Chill.
+Tu es un assistant conversationnel naturel, détendu et spontané.
+Parle comme quelqu'un avec qui l'utilisateur discute réellement.
+Évite les listes inutiles, les formulations trop formelles et les longues réponses.
+Rebondis naturellement sur ce que dit l'utilisateur.
+Réponds dans la langue choisie par l'utilisateur.
+        `,
+        agent: `
+Tu es BDCM en mode Agent.
+Tu es professionnel, organisé, proactif et utile.
+Tu peux proposer des idées, aider à organiser la journée et poser des questions sur les envies de l'utilisateur.
+Quand l'utilisateur demande des informations récentes, utilise la recherche disponible.
+Sois efficace et clair, sans devenir froid ou robotique.
+Réponds dans la langue choisie par l'utilisateur.
+        `,
+        ecoute: `
+Tu es BDCM en mode Écoute.
+Ton objectif est d'être chaleureux, attentif, naturel et humain dans la conversation.
+Écoute avant de chercher à résoudre.
+Pose une seule question à la fois lorsque cela aide à comprendre.
+Ne donne pas automatiquement une liste de conseils.
+Ne prétends pas être psychologue, médecin ou professionnel de santé.
+Si l'utilisateur semble en danger immédiat ou parle de se faire du mal, encourage-le à contacter immédiatement un adulte de confiance ou les services d'urgence.
+Réponds dans la langue choisie par l'utilisateur.
+        `
+    };
+
+    return prompts[state.mode];
+}
+
+async function respondToUser(text) {
+    if (!text || !text.trim()) return;
+
+    const cleanText = text.trim();
+
+    if (isSpeaking) stopSpeaking();
+
+    statusText.textContent = "BDCM RÉFLÉCHIT";
+    statusDot.style.background = state.color;
+    statusDot.style.boxShadow = `0 0 12px ${state.color}`;
+    coreAction.textContent = "TRAITEMENT";
+
+    conversationHistory.push({
+        role: "user",
+        content: cleanText
+    });
+
+    try {
+        const response = await fetch(CONFIG.apiEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: cleanText,
+                history: conversationHistory,
+                mode: state.mode,
+                language: state.language,
+                systemPrompt: getSystemPrompt()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Erreur serveur : " + response.status);
+        }
+
+        const data = await response.json();
+
+        const answer =
+            data.reply ||
+            data.output ||
+            "Je n'ai pas reçu de réponse.";
+
+        conversationHistory.push({
+            role: "assistant",
+            content: answer
+        });
+
+        speak(answer);
+
+    } catch (error) {
+        console.error("Erreur BDCM :", error);
+
+        statusText.textContent = "ERREUR CONNEXION";
+        statusDot.style.background = "#555";
+        statusDot.style.boxShadow = "0 0 5px #555";
+        coreAction.textContent = "CONNEXION IMPOSSIBLE";
+
+        // Retour à l'état normal après quelques secondes.
+        setTimeout(() => {
+            if (!isSpeaking && !isListening) {
+                statusText.textContent = "SYSTEM ONLINE";
+                coreAction.textContent = "CLIQUER POUR PARLER";
             }
-
-            else {
-
-                utterance.lang =
-                    BDCM_CONFIG.recognitionLanguage;
-
-            }
-
-
-            utterance.rate =
-                BDCM_CONFIG.speechRate;
-
-
-            utterance.pitch =
-                BDCM_CONFIG.speechPitch;
-
-
-            utterance.volume =
-                BDCM_CONFIG.speechVolume;
-
-
-            utterance.onstart =
-                function () {
-
-                    statusText.textContent =
-                        "BDCM PARLE";
-
-
-                    statusDot.style.background =
-                        "#f5d928";
-
-
-                    statusDot.style.boxShadow =
-                        "0 0 12px #f5d928";
-
-
-                    coreAction.textContent =
-                        "TRANSMISSION";
-
-                };
-
-
-            utterance.onend =
-                function () {
-
-                    statusText.textContent =
-                        "SYSTEM ONLINE";
-
-
-                    statusDot.style.background =
-                        "#555";
-
-
-                    statusDot.style.boxShadow =
-                        "0 0 5px #555";
-
-
-                    coreAction.textContent =
-                        "CLIQUER POUR PARLER";
-
-                };
-
-
-            utterance.onerror =
-                function (error) {
-
-                    console.log(
-                        "Erreur voix :",
-                        error
-                    );
-
-
-                    statusText.textContent =
-                        "SYSTEM ONLINE";
-
-
-                    coreAction.textContent =
-                        "CLIQUER POUR PARLER";
-
-                };
-
-
-            speechSynthesis.speak(
-                utterance
-            );
-
-        }
-
-
-        /* =========================
-           TEST VOICE
-        ========================= */
-
-        function testBDCMVoice() {
-
-            speak(
-                "Bonjour. Je suis BDCM, votre assistant personnel."
-            );
-
-        }
-
-
-        /* =========================
-           SPEECH RATE
-        ========================= */
-
-        function setSpeechRate(rate) {
-
-            BDCM_CONFIG.speechRate =
-                Number(rate);
-
-        }
-
-
-        /* =========================
-           SPEECH PITCH
-        ========================= */
-
-        function setSpeechPitch(pitch) {
-
-            BDCM_CONFIG.speechPitch =
-                Number(pitch);
-
-        }
-
-
-        /* =========================
-           CLEAR CONVERSATION
-        ========================= */
-
-        function clearConversation() {
-
-            conversationHistory = [];
-
-
-            userText.textContent = "";
-
-
-            bdcmText.textContent =
-                "Mémoire de conversation réinitialisée.";
-
-        }
-
-
-        /* =========================
-           INITIALISATION
-        ========================= */
-
-        statusText.textContent =
-            "SYSTEM ONLINE";
-
-
-        bdcmText.textContent =
-            "Bonjour. Je suis BDCM.";
-
-    </script>
-
+        }, 2500);
+    }
+}
+
+core.addEventListener("click", () => {
+    if (isSpeaking) {
+        stopSpeaking();
+    } else if (isListening) {
+        recognition.stop();
+    } else {
+        startListening();
+    }
+});
+
+/* Compte : interface préparée, backend à connecter ensuite. */
+const accountModal = document.getElementById("accountModal");
+const accountButton = document.getElementById("accountButton");
+const cancelAccount = document.getElementById("cancelAccount");
+const loginButton = document.getElementById("loginButton");
+
+accountButton.addEventListener("click", () => {
+    accountModal.classList.add("open");
+});
+
+cancelAccount.addEventListener("click", () => {
+    accountModal.classList.remove("open");
+});
+
+loginButton.addEventListener("click", () => {
+    alert("La création de compte sera activée avec le serveur BDCM.");
+});
+
+accountModal.addEventListener("click", event => {
+    if (event.target === accountModal) {
+        accountModal.classList.remove("open");
+    }
+});
+
+/* Visualiseur léger */
+const canvas = document.getElementById("visualizer");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+let visualTime = 0;
+
+function drawVisualizer() {
+    visualTime += 0.015;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    for (let i = 0; i < 42; i++) {
+        const angle = (Math.PI * 2 * i) / 42;
+        const pulse = isListening || isSpeaking
+            ? 15 + Math.sin(visualTime * 5 + i) * 10
+            : 5 + Math.sin(visualTime * 2 + i) * 3;
+
+        const radius = Math.min(canvas.width, canvas.height) * .19 + pulse;
+        const x1 = cx + Math.cos(angle) * radius;
+        const y1 = cy + Math.sin(angle) * radius;
+
+        const length = 4 + pulse * .25;
+        const x2 = cx + Math.cos(angle) * (radius + length);
+        const y2 = cy + Math.sin(angle) * (radius + length);
+
+        ctx.strokeStyle = state.color;
+        ctx.globalAlpha = isListening || isSpeaking ? .28 : .10;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawVisualizer);
+}
+
+applyState();
+drawVisualizer();
+</script>
 </body>
-
 </html>
-```
