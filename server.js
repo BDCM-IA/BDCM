@@ -381,36 +381,57 @@ function needsWebSearch(message) {
     const text = normalizeText(message);
 
     const dynamicPatterns = [
+        // Indications temporelles
         "aujourd hui",
-        "aujourd'hui",
         "maintenant",
         "en ce moment",
         "actuellement",
         "dernier",
         "derniere",
         "dernieres",
-        "dernierement",
         "recent",
         "recente",
         "recemment",
         "news",
         "actualite",
         "actualites",
-        "prix actuel",
-        "prix aujourd",
-        "meteo",
-        "temperature",
-        "score",
-        "resultat",
-        "match",
-        "classement",
-        "qui a gagne",
-        "qui gagne",
-        "sorti aujourd",
-        "sortie aujourd",
-        "2026"
-    ];
+        "ce soir",
+        "demain",
+        "cette semaine",
+        "cette annee",
+        "2026",
 
+        // Présent : être
+        " est ",
+        " sont ",
+
+        // Présent : jouer
+        " joue ",
+        " jouent ",
+
+        // Présent : avoir
+        " a ",
+        " ont ",
+
+        // Présent : faire
+        " fait ",
+        " font ",
+
+        // Présent : aller
+        " va ",
+        " vont ",
+
+        // Présent : pouvoir
+        " peut ",
+        " peuvent ",
+
+        // Présent : être dans / appartenir
+        " se trouve ",
+        " se trouvent ",
+        " appartient ",
+        " appartiennent ",
+
+        const paddedText = ` ${text} `;
     return dynamicPatterns.some(pattern =>
         text.includes(pattern)
     );
