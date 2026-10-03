@@ -57,7 +57,6 @@ app.post("/api/chat", async (req, res) => {
 const response = await openai.responses.create({
     model: "openai/gpt-oss-20b",
     input: messages,
-    tool_choice: "required",
     tools: [
         {
             type: "browser_search"
