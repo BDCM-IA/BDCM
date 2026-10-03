@@ -20,7 +20,9 @@ app.use((req, res, next) => {
 });
 
 /* Connexion à Groq */
-model: "openai/gpt-oss-20b",
+const openai = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1"
 });
 
 /* Route BDCM */
@@ -53,7 +55,8 @@ app.post("/api/chat", async (req, res) => {
         ];
 
         const response = await openai.responses.create({
-model: "llama-3.3-70b-versatile",            input: messages
+            model: "openai/gpt-oss-20b",
+            input: messages
         });
 
         res.json({
@@ -61,11 +64,10 @@ model: "llama-3.3-70b-versatile",            input: messages
         });
 
     } catch (error) {
-
-        console.error("ERREUR OPENAI :", error);
+        console.error("ERREUR GROQ :", error);
 
         res.status(500).json({
-            error: "Erreur avec OpenAI"
+            error: "Erreur avec Groq"
         });
     }
 });
